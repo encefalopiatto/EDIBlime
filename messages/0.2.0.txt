@@ -1,0 +1,37 @@
+EDIBlime 0.2.0
+==============
+
+Renamed: the package is now EDIBlime (formerly SublimeEDI).
+
+New features
+------------
+- Detailed segment help: hover any segment (or Ctrl/Cmd+Alt+E) for a full
+  explanation of what it means and does, plus an element-by-element
+  breakdown of the actual values.
+- Qualifier decoding: common codes are translated inline (DTM+137 ->
+  "Document/message date", NAD+BY -> "Buyer", ST*850 -> "Purchase Order").
+- Convert to JSON, JSONC and XML in a new tab. JSONC output is
+  self-documenting with segment descriptions and element names as comments.
+- Validate Structure: envelope integrity checks (counts, references,
+  unclosed messages/groups) with a browsable issue panel and squiggles.
+  Optional validate_on_save setting.
+- Repair Envelope: recompute UNT/SE/MTR/UNZ/GE/IEA/END counts and re-sync
+  control references in one step.
+- Outline: browse the segment structure in a quick panel; Goto Symbol
+  navigates by segment; segment-tag completions with names.
+- Status bar shows the segment and element under the caret
+  (e.g. "EDIFACT · NAD-3.1 — City").
+
+Hardening (multi-agent code review)
+-----------------------------------
+- Detection no longer claims ordinary text containing an apostrophe/tilde.
+- Correct handling of: UNA declaring "no release character", HL7 fields
+  ending in escape sequences, newline-terminated X12 with full-width ISA,
+  unpadded ISA segments, UTF-8 BOMs, newline segment terminators.
+- Beautify no longer corrupts Windows-line-ending files.
+- Converters survive control characters and adversarial data.
+- Big-file performance: parsing is cached per edit; caret moves and hovers
+  no longer re-parse the buffer; listeners are inert in non-EDI views.
+- Key bindings are scoped to EDI syntaxes and no longer shadow
+  Paste from History on macOS.
+- Corrected reference data (PCD, BAK, CUX, TRADACOMS OLD).

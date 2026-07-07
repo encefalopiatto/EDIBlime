@@ -1,0 +1,572 @@
+{
+    "scope": "source.edifact",
+    "completions": [
+        {
+            "trigger": "AGR\tAgreement Identification",
+            "contents": "AGR+",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "AJT\tAdjustment Details",
+            "contents": "AJT+",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ALC\tAllowance or Charge",
+            "contents": "ALC+",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ALI\tAdditional Information",
+            "contents": "ALI+",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "APR\tAdditional Price Information",
+            "contents": "APR+",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "BGM\tBeginning of Message",
+            "contents": "BGM+",
+            "kind": [
+                "navigation",
+                "B",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "CNI\tConsignment Information",
+            "contents": "CNI+",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "CNT\tControl Total",
+            "contents": "CNT+",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "COM\tCommunication Contact",
+            "contents": "COM+",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "CTA\tContact Information",
+            "contents": "CTA+",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "CUX\tCurrencies",
+            "contents": "CUX+",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "DGS\tDangerous Goods",
+            "contents": "DGS+",
+            "kind": [
+                "navigation",
+                "D",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "DIM\tDimensions",
+            "contents": "DIM+",
+            "kind": [
+                "navigation",
+                "D",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "DOC\tDocument/Message Details",
+            "contents": "DOC+",
+            "kind": [
+                "navigation",
+                "D",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "DTM\tDate/Time/Period",
+            "contents": "DTM+",
+            "kind": [
+                "navigation",
+                "D",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "EQD\tEquipment Details",
+            "contents": "EQD+",
+            "kind": [
+                "navigation",
+                "E",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "EQN\tNumber of Units",
+            "contents": "EQN+",
+            "kind": [
+                "navigation",
+                "E",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "FII\tFinancial Institution Information",
+            "contents": "FII+",
+            "kind": [
+                "navigation",
+                "F",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "FTX\tFree Text",
+            "contents": "FTX+",
+            "kind": [
+                "navigation",
+                "F",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "GEI\tProcessing Information",
+            "contents": "GEI+",
+            "kind": [
+                "navigation",
+                "G",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "GIN\tGoods Identity Number",
+            "contents": "GIN+",
+            "kind": [
+                "navigation",
+                "G",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "GIR\tRelated Identification Numbers",
+            "contents": "GIR+",
+            "kind": [
+                "navigation",
+                "G",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "GIS\tGeneral Indicator",
+            "contents": "GIS+",
+            "kind": [
+                "navigation",
+                "G",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "HAN\tHandling Instructions",
+            "contents": "HAN+",
+            "kind": [
+                "navigation",
+                "H",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "IMD\tItem Description",
+            "contents": "IMD+",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "INP\tParties and Instruction",
+            "contents": "INP+",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "LIN\tLine Item",
+            "contents": "LIN+",
+            "kind": [
+                "navigation",
+                "L",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "LOC\tPlace/Location Identification",
+            "contents": "LOC+",
+            "kind": [
+                "navigation",
+                "L",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MEA\tMeasurements",
+            "contents": "MEA+",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MKS\tMarket/Sales Channel Information",
+            "contents": "MKS+",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MOA\tMonetary Amount",
+            "contents": "MOA+",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "NAD\tName and Address",
+            "contents": "NAD+",
+            "kind": [
+                "navigation",
+                "N",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PAC\tPackage",
+            "contents": "PAC+",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PAI\tPayment Instructions",
+            "contents": "PAI+",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PAT\tPayment Terms Basis",
+            "contents": "PAT+",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PCD\tPercentage Details",
+            "contents": "PCD+",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PCI\tPackage Identification",
+            "contents": "PCI+",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PGI\tProduct Group Information",
+            "contents": "PGI+",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PIA\tAdditional Product ID",
+            "contents": "PIA+",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PRI\tPrice Details",
+            "contents": "PRI+",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PYT\tPayment Terms",
+            "contents": "PYT+",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "QTY\tQuantity",
+            "contents": "QTY+",
+            "kind": [
+                "navigation",
+                "Q",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "QVR\tQuantity Variances",
+            "contents": "QVR+",
+            "kind": [
+                "navigation",
+                "Q",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "RFF\tReference",
+            "contents": "RFF+",
+            "kind": [
+                "navigation",
+                "R",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "RNG\tRange Details",
+            "contents": "RNG+",
+            "kind": [
+                "navigation",
+                "R",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SCC\tScheduling Conditions",
+            "contents": "SCC+",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SEL\tSeal Number",
+            "contents": "SEL+",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SGP\tSplit Goods Placement",
+            "contents": "SGP+",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "STS\tStatus",
+            "contents": "STS+",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TAX\tDuty/Tax/Fee Details",
+            "contents": "TAX+",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TDT\tTransport Information",
+            "contents": "TDT+",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TOD\tTerms of Delivery or Transport",
+            "contents": "TOD+",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TSR\tTransport Service Requirements",
+            "contents": "TSR+",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNA\tService String Advice",
+            "contents": "UNA:+.? '",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNB\tInterchange Header",
+            "contents": "UNB+",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNE\tFunctional Group Trailer",
+            "contents": "UNE+",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNG\tFunctional Group Header",
+            "contents": "UNG+",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNH\tMessage Header",
+            "contents": "UNH+",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNO\tObject Header",
+            "contents": "UNO+",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNP\tObject Trailer",
+            "contents": "UNP+",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNS\tSection Control",
+            "contents": "UNS+",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNT\tMessage Trailer",
+            "contents": "UNT+",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "UNZ\tInterchange Trailer",
+            "contents": "UNZ+",
+            "kind": [
+                "navigation",
+                "U",
+                "Segment"
+            ]
+        }
+    ]
+}

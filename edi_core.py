@@ -22,6 +22,8 @@ The public surface is small and stable:
     describe_segments(text, ...) -> [(Segment, name), ...]
 """
 
+import re
+
 try:
     # Normal case: imported as part of the Sublime Text package.
     from . import edi_data
@@ -63,7 +65,10 @@ class Dialect(object):
         family = family or edi_data.dialect_family(key)
         base = dict(edi_data.DIALECTS[family])
         if overrides:
-            base.update({k: v for k, v in overrides.items() if v})
+            # Overrides are applied verbatim: callers only include keys they
+            # actually resolved, and an explicit None is meaningful (e.g. a
+            # UNA declaring "no release character" via a space).
+            base.update(overrides)
         label = base.pop("label", family.upper())
         # EDIFACT subsets carry their own display label.
         if key in edi_data.EDIFACT_SUBSETS:
@@ -89,9 +94,14 @@ class Dialect(object):
         # dialects use their single declared terminator.
         if self.family == "hl7":
             terminators = ("\r", "\n")
+            # HL7's "\\" escape works as *delimited pairs* (\F\, \.br\, ...),
+            # not as a release character prefixing the next byte, and a CR can
+            # never be escaped -- skipping here would let a field that ends in
+            # an escape sequence swallow the segment terminator.
+            release = None
         else:
             terminators = (self.segment_terminator,)
-        release = self.release_character
+            release = self.release_character
         n = len(text)
         i = 0
         seg_start = 0          # offset where the current raw segment begins
@@ -123,11 +133,13 @@ class Dialect(object):
         whitespace (including any indentation a user added) is dropped, while
         the trailing edge only sheds line breaks/tabs -- a trailing data space
         such as the EDIFACT UNA reserved character must survive the round trip.
+        A UTF-8 BOM (U+FEFF) is likewise trimmed so it cannot leak into the
+        first segment's tag.
         """
         s, e = start, end
-        while s < e and text[s] in "\r\n\t ":
+        while s < e and text[s] in "\r\n\t ﻿":
             s += 1
-        while e > s and text[e - 1] in "\r\n\t":
+        while e > s and text[e - 1] in "\r\n\t﻿":
             e -= 1
         if e > s:
             spans.append((s, e, Segment(text[s:e], self)))
@@ -214,17 +226,45 @@ class Segment(object):
             ]
 
         # Delimiter-based dialects with an optional release character.
-        body = content[len(self.tag):]
-        if body.startswith(d.tag_separator or d.element_separator):
-            body = body[1:]
-        if not body:
-            return []
-        raw_elements = _split_released(body, d.element_separator, d.release_character)
         return [
             [_unescape(c, d.release_character)
              for c in _split_released(e, d.component_separator, d.release_character)]
-            for e in raw_elements
+            for e in self.raw_elements()
         ]
+
+    def raw_elements(self):
+        """This segment's element strings exactly as written.
+
+        Unlike :meth:`elements`, components are not split and release
+        characters stay in place, so ``rebuild_segment(tag, raw_elements)``
+        reproduces the original content byte for byte.
+        """
+        d = self.dialect
+        content = self.content
+        if d.family == "hl7":
+            if len(content) <= 4:
+                return []
+            return content[4:].split(d.element_separator)
+        if d.family == "edifact" and self.tag == "UNA":
+            return [content[3:]]
+        body = content[len(self.tag):]
+        # The tag may be followed by the dialect's tag separator (TRADACOMS
+        # ``=``) or directly by the element separator; strip whichever is
+        # actually there so indices stay aligned either way.
+        if body and (body[0] == d.element_separator
+                     or (d.tag_separator and body[0] == d.tag_separator)):
+            body = body[1:]
+        if not body:
+            return []
+        return _split_released(body, d.element_separator, d.release_character)
+
+    def with_raw_elements(self, raw):
+        """Rebuild this segment's content from raw element strings."""
+        d = self.dialect
+        if d.family == "edifact" and self.tag == "UNA":
+            return self.tag + "".join(raw)
+        first = d.element_separator if d.family == "hl7" else (d.tag_separator or d.element_separator)
+        return self.tag + first + d.element_separator.join(raw)
 
 
 # ---------------------------------------------------------------------------
@@ -355,15 +395,37 @@ def detect(text):
     if head.startswith("MSH"):
         return _detect_hl7(stripped)
 
-    # Heuristic fallback based on which terminator dominates.
-    term = _dominant(stripped, ["'", "~", "\r"])
-    if term == "~":
-        return Dialect.from_family("x12")
-    if term == "'":
+    # Heuristic fallback for messages without their envelope. Requires real
+    # structural evidence -- segments shaped like ``TAG<element sep>...`` --
+    # so that ordinary prose or code (which merely *contains* an apostrophe
+    # or tilde) is never claimed as EDI.
+    if _plausible_fallback(stripped, "'", "+"):
         return Dialect.from_family("edifact")
-    if term == "\r" and "|" in stripped:
+    if _plausible_fallback(stripped, "~", "*"):
+        return Dialect.from_family("x12")
+    if _HL7_HEAD.match(stripped) and stripped.count("|") >= 3:
         return _detect_hl7(stripped)
     return None
+
+
+_TAG_SHAPE = re.compile(r"^[A-Z][A-Z0-9]{1,3}$")
+_HL7_HEAD = re.compile(r"^[A-Z][A-Z0-9]{2}\|")
+
+
+def _plausible_fallback(text, term, elem):
+    """True when ``text`` plausibly consists of ``TAG<elem>...<term>`` segments.
+
+    Demands at least two segment terminators and a leading segment whose tag
+    (2-4 uppercase alphanumerics) is immediately followed by the element
+    separator.
+    """
+    if text.count(term) < 2:
+        return False
+    first = text.split(term, 1)[0].strip()
+    idx = first.find(elem)
+    if idx < 2 or idx > 4:
+        return False
+    return bool(_TAG_SHAPE.match(first[:idx]))
 
 
 def _detect_edifact(text):
@@ -381,20 +443,34 @@ def _detect_edifact(text):
 
 
 def _detect_x12(text):
-    # ISA is a fixed-width 106-character segment. The element separator is the
-    # 4th character; the component separator and segment terminator are the
-    # final two characters of the ISA segment.
+    # ISA is a fixed-width 106-character segment: element separator at index
+    # 3, repetition separator (version 00402+) at 82, component separator at
+    # 104 and the segment terminator at 105. Verify the fixed-width shape
+    # (element separators at their known positions) before trusting those
+    # offsets -- some senders emit unpadded ISA segments, and blindly indexing
+    # into one yields garbage delimiters.
     elem = text[3] if len(text) > 3 else "*"
     comp = ":"
     term = "~"
     rep = None
-    if len(text) >= 106 and text[105] not in ("", "\n"):
+    fixed = (len(text) >= 106
+             and text[99] == elem and text[101] == elem and text[103] == elem)
+    if fixed:
         comp = text[104]
+        # A line break is a perfectly valid terminator (one segment per line).
         term = text[105]
-        rep = text[82] if text[82] not in (" ", elem) else None
+        # ISA11 is the repetition separator only from control version 00402;
+        # before that it held the standards identifier (usually "U").
+        version = text[84:89]
+        if version >= "00402" and text[82] not in (" ", elem):
+            rep = text[82]
     else:
-        # Fall back: element separator known, find terminator after ~16 fields.
+        # Unpadded ISA: pick the dominating terminator, and read ISA16 (the
+        # component separator) as the last element of the ISA segment.
         term = _dominant(text, ["~", "'", "\n"]) or "~"
+        end = text.find(term)
+        if end > 4 and text[end - 2] == elem:
+            comp = text[end - 1]
     overrides = {
         "element_separator": elem,
         "component_separator": comp,
@@ -440,15 +516,16 @@ def beautify(text, dialect=None, keep_terminator=True, newline="\n"):
         return text
 
     term = dialect.segment_terminator
+    # When the terminator is itself a line break (HL7's CR, or an interchange
+    # that declared a newline terminator), the joining newline *is* the
+    # terminator -- appending it again would emit blank lines.
+    newline_is_term = dialect.family == "hl7" or term in ("\n", "\r", "\r\n")
     lines = []
     for seg in segments:
-        if dialect.family == "hl7":
-            # HL7 terminator is CR; the newline *is* the terminator.
+        if newline_is_term or not keep_terminator:
             lines.append(seg.content)
-        elif keep_terminator:
-            lines.append(seg.content + term)
         else:
-            lines.append(seg.content)
+            lines.append(seg.content + term)
     return newline.join(lines) + newline
 
 
@@ -479,6 +556,48 @@ def describe_segments(text, dialect=None):
     string when the tag is not in the reference tables.
     """
     return [(seg, name) for _s, _e, seg, name in describe_spans(text, dialect)]
+
+
+def element_at(segment, offset):
+    """Locate the element/component containing ``offset`` within a segment.
+
+    ``offset`` is 0-based relative to ``segment.content``. Returns a
+    ``(element_number, component_number)`` pair using the same 1-based
+    numbering as :meth:`Segment.elements` (HL7's MSH counts the field
+    separator itself as MSH-1, so its numbers shift by one). ``(0, 0)`` means
+    the offset sits on the segment tag (or inside a fixed-format UNA).
+    """
+    d = segment.dialect
+    content = segment.content
+    offset = max(0, min(offset, len(content)))
+    if d.family == "edifact" and segment.tag == "UNA":
+        return (0, 0)
+    if d.family == "hl7":
+        elem_no = content.count(d.element_separator, 0, offset)
+        if segment.tag == "MSH":
+            elem_no += 1 if elem_no else 0
+            if elem_no == 2:
+                # MSH-2 is the encoding declaration: its ^ ~ \ & are literal.
+                return (2, 1)
+        start = content.rfind(d.element_separator, 0, offset) + 1
+        comp_no = content.count(d.component_separator, start, offset) + 1
+        return (elem_no, comp_no) if elem_no > 0 else (0, 0)
+    release = d.release_character
+    elem_no = 0
+    comp_no = 1
+    i = 0
+    while i < offset:
+        ch = content[i]
+        if release and ch == release:
+            i += 2
+            continue
+        if ch == d.element_separator or (d.tag_separator and ch == d.tag_separator):
+            elem_no += 1
+            comp_no = 1
+        elif ch == d.component_separator:
+            comp_no += 1
+        i += 1
+    return (elem_no, comp_no) if elem_no > 0 else (0, 0)
 
 
 def describe_spans(text, dialect=None):

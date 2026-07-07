@@ -9,7 +9,7 @@ a human can actually work with: one segment per line, syntax highlighting, and
 optional inline hints that name every segment — without ever changing the data.
 
 ```
-UNB+UNOC:3+SENDER:14+RECEIVER:14+200101:1200+1'UNH+1+ORDERS:D:96A:UN'BGM+220+PO12345+9'...
+UNA:+.? 'UNB+UNOC:3+SENDER:14+RECEIVER:14+200101:1200+1'UNH+1+ORDERS:D:96A:UN'BGM+220+PO12345+9'...
 ```
 
 becomes
@@ -41,13 +41,23 @@ valid, byte-for-byte EDI document.
   popup that explains what the segment means and does, plus an
   **element-by-element breakdown** with the value and the element's name
   (e.g. `1. "UNOC:3" — Syntax identifier : version`). Works for EDIFACT, X12,
-  TRADACOMS and HL7. The segment under the caret is also named in the status
-  bar as you move around.
+  TRADACOMS and HL7. The status bar names the segment *and element* under the
+  caret (e.g. `EDIFACT · NAD-3.1 — City`) as you move around.
 - **Validation** — check the envelope integrity every dialect builds in:
   segment counts (`UNT`, `SE`, `MTR`), message/transaction counts (`UNZ`,
-  `GE`, `IEA`, `END`) and control-reference echoes (`UNB`↔`UNZ`, `ISA`↔`IEA`,
-  `UNH`↔`UNT`, `ST`↔`SE`). Issues open in a quick panel that jumps to the
-  offending segment.
+  `GE`, `IEA`, `END`, `UNE`), unclosed messages/groups/transaction sets, and
+  control-reference echoes (`UNB`↔`UNZ`, `ISA`↔`IEA`, `UNH`↔`UNT`, `ST`↔`SE`,
+  `UNG`↔`UNE`). Issues open in a quick panel that jumps to the offending
+  segment, problem segments get a squiggly underline, and the optional
+  `validate_on_save` setting re-checks on every save.
+- **Envelope repair** — after hand-editing a message, `EDI: Repair Envelope`
+  recomputes every count and re-syncs the control references in one step.
+- **Qualifier decoding** — common code values are translated inline: hover
+  `DTM+137:...` and the popup reads `137 = Document/message date`; `NAD+BY`,
+  `QTY+21`, X12 `ST*850`, HL7 `PV1` patient classes and many more.
+- **Outline & completions** — `EDI: Outline` browses the segment structure in
+  a quick panel, Goto Symbol (`Ctrl+R`) navigates by segment, and typing a
+  segment tag offers completions with the segment's name.
 - **Convert to JSON / JSONC / XML** — turn a message into a structured
   document in a new tab. The JSONC output is self-documenting: every segment
   is preceded by a comment explaining what it does, and every element carries
@@ -86,7 +96,9 @@ still reported individually so segment tables can diverge over time.
 ## Commands
 
 All commands are available from the **Command Palette** (`Ctrl/Cmd+Shift+P`,
-type "EDI"), the **Tools → EDI** menu, and the editor context menu.
+type "EDI") and the **Tools → EDIBlime** menu; the editor context menu carries
+the common actions (beautify, minify, hints, explain, validate, repair,
+outline, convert).
 
 | Command | Palette entry | Default key binding |
 |---------|---------------|---------------------|
@@ -94,37 +106,53 @@ type "EDI"), the **Tools → EDI** menu, and the editor context menu.
 | `edi_minify` | EDI: Minify (collapse to single line) | `Ctrl+Alt+M` / `Cmd+Alt+M` |
 | `edi_toggle_hints` | EDI: Toggle Inline Hints | `Ctrl+Alt+H` / `Cmd+Alt+H` |
 | `edi_explain_segment` | EDI: Explain Segment Under Caret | `Ctrl+Alt+E` / `Cmd+Alt+E` |
-| `edi_validate` | EDI: Validate Structure | `Ctrl+Alt+V` / `Cmd+Alt+V` |
+| `edi_validate` | EDI: Validate Structure | `Ctrl+Alt+V` / `Ctrl+Cmd+V` |
+| `edi_repair` | EDI: Repair Envelope (fix counts and references) | `Ctrl+Alt+R` / `Ctrl+Cmd+R` |
+| `edi_outline` | EDI: Outline (browse segments) | `Ctrl+Alt+O` / `Ctrl+Cmd+O` |
 | `edi_convert` (json) | EDI: Convert to JSON | — |
 | `edi_convert` (jsonc) | EDI: Convert to JSONC (with descriptions) | — |
 | `edi_convert` (xml) | EDI: Convert to XML | — |
 | `edi_set_dialect` | EDI: Set Dialect… | — |
 | `edi_detect_syntax` | EDI: Detect Syntax | — |
 
+Key bindings are scoped to the package's own syntaxes, so they never fire
+(or shadow other packages) in ordinary files.
+
 ### Conversion output
 
 `EDI: Convert to JSONC` produces a self-documenting document:
 
 ```jsonc
-// UNB — Interchange Header
-// Opens the interchange. Carries the syntax identifier and version (e.g. UNOC:3), ...
 {
-  "tag": "UNB",
-  "name": "Interchange Header",
-  "elements": [
-    ["UNOC", "3"],    // 1. Syntax identifier : version (e.g. UNOC:3)
-    ["SENDER", "14"], // 2. Interchange sender (id : qualifier)
-    "1"               // 5. Interchange control reference (repeated in UNZ)
+  // EDIFACT message converted by EDIBlime
+  "dialect": "EDIFACT",
+  "delimiters": { "segment": "'", "element": "+", "component": ":" },
+  "segments": [
+
+    // UNB — Interchange Header
+    // Opens the interchange. Carries the syntax identifier and version (e.g. UNOC:3), ...
+    {
+      "tag": "UNB",
+      "name": "Interchange Header",
+      "elements": [
+        ["UNOC", "3"],  // 1. Syntax identifier : version (e.g. UNOC:3)
+        ["SENDER", "14"],  // 2. Interchange sender (id : qualifier)
+        "1"  // 5. Interchange control reference (repeated in UNZ)
+      ]
+    }
   ]
 }
 ```
+
+Qualifier codes are decoded inline where known — a `DTM+137:...` element's
+comment reads `[137 = Document/message date]`.
 
 JSON is the same structure without comments; XML nests
 `<segment>` → `<element>` → `<component>` with `name` attributes.
 
 ## Settings
 
-`Preferences → Package Settings → EDI → Settings`:
+`Preferences → Package Settings → EDIBlime → Settings`:
 
 ```jsonc
 {

@@ -20,19 +20,33 @@
         "command": "edi_validate"
     },
     {
+        "caption": "EDI: Repair Envelope (fix counts and references)",
+        "command": "edi_repair"
+    },
+    {
+        "caption": "EDI: Outline (browse segments)",
+        "command": "edi_outline"
+    },
+    {
         "caption": "EDI: Convert to JSON",
         "command": "edi_convert",
-        "args": {"format": "json"}
+        "args": {
+            "format": "json"
+        }
     },
     {
         "caption": "EDI: Convert to JSONC (with descriptions)",
         "command": "edi_convert",
-        "args": {"format": "jsonc"}
+        "args": {
+            "format": "jsonc"
+        }
     },
     {
         "caption": "EDI: Convert to XML",
         "command": "edi_convert",
-        "args": {"format": "xml"}
+        "args": {
+            "format": "xml"
+        }
     },
     {
         "caption": "EDI: Set Dialect…",

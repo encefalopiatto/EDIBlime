@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-Structural validation of EDI envelopes.
+Structural validation and repair of EDI envelopes.
 
 Checks the control structures that every EDI dialect builds in for integrity
 verification -- segment counts, message counts and control-reference echoes:
 
 * EDIFACT:   UNH/UNT segment count + reference, UNB/UNZ count + reference,
-             UNG/UNE when functional groups are used.
+             UNG/UNE group count + reference, unclosed messages/groups.
 * X12:       ST/SE segment count + control number, GS/GE transaction count +
-             control number, ISA/IEA group count + control number.
+             control number, ISA/IEA group count + control number, unclosed
+             transaction sets/groups, ST outside a functional group.
 * TRADACOMS: MHD/MTR segment count, MHD sequence numbering, END message count.
 * HL7:       MSH placement and encoding declaration sanity.
+
+:func:`repair` recomputes the counts and re-syncs the control references, so a
+hand-edited message can be made consistent again in one step.
 
 Like :mod:`edi_core`, this module has no Sublime Text dependency.
 Issues are returned as dicts: ``{"offset", "severity", "message"}`` where
@@ -62,6 +66,32 @@ def _first(seg, index):
     return ""
 
 
+def _to_int(value):
+    """Parse an ASCII decimal count. Returns ``None`` for anything else.
+
+    ``str.isdigit()`` alone is unsafe: it accepts Unicode digits (e.g. ``²``)
+    that ``int()`` rejects, which would crash the validator on odd input.
+    """
+    value = value.strip()
+    if value and all("0" <= c <= "9" for c in value):
+        return int(value)
+    return None
+
+
+def _check_count(issues, offset, declared, actual, what_declares, what_contains):
+    """Compare a declared count against reality, flagging non-numeric values."""
+    n = _to_int(declared)
+    if n is None:
+        issues.append(_issue(
+            offset, "warning",
+            "%s declares a non-numeric count '%s'" % (what_declares, declared)))
+    elif n != actual:
+        issues.append(_issue(
+            offset, "error",
+            "%s declares %s %s but it contains %d"
+            % (what_declares, declared, what_contains, actual)))
+
+
 def _flag_unknown_tags(dialect, spans, issues):
     for start, _end, seg in spans:
         if not edi_data.segment_name(dialect.key, seg.tag):
@@ -79,7 +109,8 @@ def _validate_edifact(spans, issues):
     unb = None
     message_count = 0
     group_count = 0
-    unh = None           # (offset, ref, segment_count_so_far)
+    unh = None           # [offset, ref, segment_count_so_far]
+    ung = None           # [offset, ref, messages_in_group]
     saw_unz = False
 
     for start, _end, seg in spans:
@@ -90,25 +121,40 @@ def _validate_edifact(spans, issues):
         if tag == "UNB":
             unb = (start, _first(seg, 4))
         elif tag == "UNG":
+            if ung is not None:
+                issues.append(_issue(
+                    start, "error",
+                    "UNG found before the previous group was closed by UNE"))
             group_count += 1
+            ung = [start, _first(seg, 4), 0]
+        elif tag == "UNE":
+            if ung is None:
+                issues.append(_issue(start, "error", "UNE without a matching UNG"))
+                continue
+            _check_count(issues, start, _first(seg, 0), ung[2],
+                         "UNE", "messages in the group")
+            ref = _first(seg, 1)
+            if ref != ung[1]:
+                issues.append(_issue(
+                    start, "error",
+                    "UNE reference '%s' does not match UNG reference '%s'"
+                    % (ref, ung[1])))
+            ung = None
         elif tag == "UNH":
             if unh is not None:
                 issues.append(_issue(
                     start, "error",
                     "UNH found before the previous message was closed by UNT"))
             message_count += 1
+            if ung is not None:
+                ung[2] += 1
             unh = [start, _first(seg, 0), 1]  # counts UNH itself
         elif tag == "UNT":
             if unh is None:
                 issues.append(_issue(start, "error", "UNT without a matching UNH"))
                 continue
-            declared = _first(seg, 0)
-            actual = unh[2]
-            if declared.isdigit() and int(declared) != actual:
-                issues.append(_issue(
-                    start, "error",
-                    "UNT declares %s segments but the message contains %d"
-                    % (declared, actual)))
+            _check_count(issues, start, _first(seg, 0), unh[2],
+                         "UNT", "segments")
             ref = _first(seg, 1)
             if ref != unh[1]:
                 issues.append(_issue(
@@ -118,14 +164,9 @@ def _validate_edifact(spans, issues):
             unh = None
         elif tag == "UNZ":
             saw_unz = True
-            declared = _first(seg, 0)
             expected = group_count if group_count else message_count
-            if declared.isdigit() and int(declared) != expected:
-                issues.append(_issue(
-                    start, "error",
-                    "UNZ declares %s %s but the interchange contains %d"
-                    % (declared,
-                       "groups" if group_count else "messages", expected)))
+            _check_count(issues, start, _first(seg, 0), expected,
+                         "UNZ", "groups" if group_count else "messages")
             ref = _first(seg, 1)
             if unb is not None and ref != unb[1]:
                 issues.append(_issue(
@@ -135,6 +176,8 @@ def _validate_edifact(spans, issues):
 
     if unh is not None:
         issues.append(_issue(unh[0], "error", "UNH message is never closed by UNT"))
+    if ung is not None:
+        issues.append(_issue(ung[0], "error", "UNG group is never closed by UNE"))
     if unb is not None and not saw_unz:
         issues.append(_issue(unb[0], "error", "UNB interchange is never closed by UNZ"))
 
@@ -145,7 +188,7 @@ def _validate_edifact(spans, issues):
 
 def _validate_x12(spans, issues):
     isa = None          # (offset, control_number)
-    gs = None           # (offset, control_number, txn_count)
+    gs = None           # [offset, control_number, txn_count]
     st = None           # [offset, control_number, segment_count]
     group_count = 0
     saw_iea = False
@@ -158,22 +201,30 @@ def _validate_x12(spans, issues):
         if tag == "ISA":
             isa = (start, _first(seg, 12).strip())
         elif tag == "GS":
+            if gs is not None:
+                issues.append(_issue(
+                    start, "error",
+                    "GS found before the previous group was closed by GE"))
             group_count += 1
             gs = [start, _first(seg, 5), 0]
         elif tag == "ST":
-            if gs is not None:
+            if st is not None:
+                issues.append(_issue(
+                    start, "error",
+                    "ST found before the previous transaction set was closed by SE"))
+            if gs is None:
+                issues.append(_issue(
+                    start, "warning",
+                    "ST outside any functional group (no open GS)"))
+            else:
                 gs[2] += 1
             st = [start, _first(seg, 1), 1]  # counts ST itself
         elif tag == "SE":
             if st is None:
                 issues.append(_issue(start, "error", "SE without a matching ST"))
                 continue
-            declared = _first(seg, 0)
-            if declared.isdigit() and int(declared) != st[2]:
-                issues.append(_issue(
-                    start, "error",
-                    "SE declares %s segments but the transaction set contains %d"
-                    % (declared, st[2])))
+            _check_count(issues, start, _first(seg, 0), st[2],
+                         "SE", "segments in the transaction set")
             ctrl = _first(seg, 1)
             if ctrl != st[1]:
                 issues.append(_issue(
@@ -185,12 +236,8 @@ def _validate_x12(spans, issues):
             if gs is None:
                 issues.append(_issue(start, "error", "GE without a matching GS"))
                 continue
-            declared = _first(seg, 0)
-            if declared.isdigit() and int(declared) != gs[2]:
-                issues.append(_issue(
-                    start, "error",
-                    "GE declares %s transaction sets but the group contains %d"
-                    % (declared, gs[2])))
+            _check_count(issues, start, _first(seg, 0), gs[2],
+                         "GE", "transaction sets in the group")
             ctrl = _first(seg, 1)
             if ctrl != gs[1]:
                 issues.append(_issue(
@@ -200,12 +247,8 @@ def _validate_x12(spans, issues):
             gs = None
         elif tag == "IEA":
             saw_iea = True
-            declared = _first(seg, 0)
-            if declared.isdigit() and int(declared) != group_count:
-                issues.append(_issue(
-                    start, "error",
-                    "IEA declares %s functional groups but the interchange contains %d"
-                    % (declared, group_count)))
+            _check_count(issues, start, _first(seg, 0), group_count,
+                         "IEA", "functional groups in the interchange")
             ctrl = _first(seg, 1).strip()
             if isa is not None and ctrl != isa[1]:
                 issues.append(_issue(
@@ -246,7 +289,8 @@ def _validate_tradacoms(spans, issues):
                     "MHD found before the previous message was closed by MTR"))
             message_count += 1
             seq = _first(seg, 0)
-            if seq.isdigit() and int(seq) != expected_seq:
+            seq_n = _to_int(seq)
+            if seq_n is not None and seq_n != expected_seq:
                 issues.append(_issue(
                     start, "warning",
                     "MHD sequence number %s out of order (expected %d)"
@@ -257,21 +301,13 @@ def _validate_tradacoms(spans, issues):
             if mhd is None:
                 issues.append(_issue(start, "error", "MTR without a matching MHD"))
                 continue
-            declared = _first(seg, 0)
-            if declared.isdigit() and int(declared) != mhd[2]:
-                issues.append(_issue(
-                    start, "error",
-                    "MTR declares %s segments but the message contains %d"
-                    % (declared, mhd[2])))
+            _check_count(issues, start, _first(seg, 0), mhd[2],
+                         "MTR", "segments in the message")
             mhd = None
         elif tag == "END":
             saw_end = True
-            declared = _first(seg, 0)
-            if declared.isdigit() and int(declared) != message_count:
-                issues.append(_issue(
-                    start, "error",
-                    "END declares %s messages but the transmission contains %d"
-                    % (declared, message_count)))
+            _check_count(issues, start, _first(seg, 0), message_count,
+                         "END", "messages in the transmission")
 
     if mhd is not None:
         issues.append(_issue(mhd[0], "error", "MHD message is never closed by MTR"))
@@ -300,3 +336,150 @@ def _validate_hl7(spans, issues):
         if len(seg.content) < 3 or not seg.tag.isalnum():
             issues.append(_issue(
                 start, "warning", "Segment name '%s' is malformed" % seg.content[:3]))
+
+
+# ---------------------------------------------------------------------------
+# Repair: recompute counts and re-sync control references
+# ---------------------------------------------------------------------------
+
+def repair(text, dialect=None):
+    """Recompute envelope counts and control references in ``text``.
+
+    Fixes UNT/UNZ/UNE (EDIFACT), SE/GE/IEA (X12) and MTR/END (TRADACOMS)
+    counts, and re-syncs the trailer references to their matching headers
+    (UNT<-UNH, UNZ<-UNB, UNE<-UNG, SE<-ST, GE<-GS, IEA<-ISA). HL7 has no
+    counted envelope, so it is returned unchanged.
+
+    Returns ``(fixed_text, changed_segment_count)``. Only the affected
+    trailer segments are rewritten; formatting elsewhere is untouched.
+    """
+    dialect = dialect or edi_core.detect(text)
+    if dialect is None:
+        return text, 0
+    spans = dialect.segment_spans(text)
+    fixes = {}  # span index -> [(element_index, new_raw_value), ...]
+
+    family = dialect.family
+    if family == "edifact":
+        _repair_edifact(spans, fixes)
+    elif family == "x12":
+        _repair_x12(spans, fixes)
+    elif family == "tradacoms":
+        _repair_tradacoms(spans, fixes)
+    if not fixes:
+        return text, 0
+
+    out = []
+    last = 0
+    changed = 0
+    for idx, (start, end, seg) in enumerate(spans):
+        if idx not in fixes:
+            continue
+        raw = seg.raw_elements()
+        for element_index, value in fixes[idx]:
+            while len(raw) <= element_index:
+                raw.append("")
+            raw[element_index] = value
+        rebuilt = seg.with_raw_elements(raw)
+        if rebuilt != seg.content:
+            out.append(text[last:start])
+            out.append(rebuilt)
+            last = end
+            changed += 1
+    out.append(text[last:])
+    return "".join(out), changed
+
+
+def _repair_edifact(spans, fixes):
+    unb_ref = None
+    unh = None           # [ref, count]
+    ung_ref = None
+    ung_messages = 0
+    message_count = 0
+    group_count = 0
+
+    for idx, (_s, _e, seg) in enumerate(spans):
+        tag = seg.tag
+        if unh is not None:
+            unh[1] += 1
+        if tag == "UNB":
+            unb_ref = _first(seg, 4)
+        elif tag == "UNG":
+            group_count += 1
+            ung_ref = _first(seg, 4)
+            ung_messages = 0
+        elif tag == "UNE":
+            fix = [(0, str(ung_messages))]
+            if ung_ref:
+                fix.append((1, ung_ref))
+            fixes[idx] = fix
+        elif tag == "UNH":
+            message_count += 1
+            ung_messages += 1
+            unh = [_first(seg, 0), 1]
+        elif tag == "UNT":
+            if unh is not None:
+                fixes[idx] = [(0, str(unh[1])), (1, unh[0])]
+                unh = None
+        elif tag == "UNZ":
+            fix = [(0, str(group_count if group_count else message_count))]
+            if unb_ref:
+                fix.append((1, unb_ref))
+            fixes[idx] = fix
+
+
+def _repair_x12(spans, fixes):
+    isa_ctrl = None
+    st = None            # [ctrl, count]
+    gs_ctrl = None
+    gs_txns = 0
+    group_count = 0
+
+    for idx, (_s, _e, seg) in enumerate(spans):
+        tag = seg.tag
+        if st is not None:
+            st[1] += 1
+        if tag == "ISA":
+            # Keep the raw (padded) value so IEA02 matches byte for byte.
+            raw = seg.raw_elements()
+            isa_ctrl = raw[12] if len(raw) > 12 else None
+        elif tag == "GS":
+            group_count += 1
+            gs_ctrl = _first(seg, 5)
+            gs_txns = 0
+        elif tag == "ST":
+            gs_txns += 1
+            st = [_first(seg, 1), 1]
+        elif tag == "SE":
+            if st is not None:
+                fixes[idx] = [(0, str(st[1])), (1, st[0])]
+                st = None
+        elif tag == "GE":
+            fix = [(0, str(gs_txns))]
+            if gs_ctrl:
+                fix.append((1, gs_ctrl))
+            fixes[idx] = fix
+        elif tag == "IEA":
+            fix = [(0, str(group_count))]
+            if isa_ctrl is not None:
+                fix.append((1, isa_ctrl))
+            fixes[idx] = fix
+
+
+def _repair_tradacoms(spans, fixes):
+    mhd_count = None
+    message_count = 0
+
+    for idx, (_s, _e, seg) in enumerate(spans):
+        tag = seg.tag
+        if mhd_count is not None:
+            mhd_count += 1
+        if tag == "MHD":
+            message_count += 1
+            mhd_count = 1
+        elif tag == "MTR":
+            if mhd_count is not None:
+                fixes[idx] = [(0, str(mhd_count))]
+                mhd_count = None
+        elif tag == "END":
+            fixes[idx] = [(0, str(message_count))]

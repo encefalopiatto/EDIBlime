@@ -1,0 +1,203 @@
+{
+    "scope": "source.tradacoms",
+    "completions": [
+        {
+            "trigger": "CDT\tCustomer Details",
+            "contents": "CDT=",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "CLO\tCustomer's Location",
+            "contents": "CLO=",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "DIN\tDelivery Instructions",
+            "contents": "DIN=",
+            "kind": [
+                "navigation",
+                "D",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "DNA\tData Narrative",
+            "contents": "DNA=",
+            "kind": [
+                "navigation",
+                "D",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "END\tEnd of Transmission",
+            "contents": "END=",
+            "kind": [
+                "navigation",
+                "E",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "FIL\tFile Details",
+            "contents": "FIL=",
+            "kind": [
+                "navigation",
+                "F",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ILD\tInvoice Line Detail",
+            "contents": "ILD=",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "IRF\tInvoice References",
+            "contents": "IRF=",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MHD\tMessage Header",
+            "contents": "MHD=",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MTR\tMessage Trailer",
+            "contents": "MTR=",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ODD\tOrder and Delivery Details",
+            "contents": "ODD=",
+            "kind": [
+                "navigation",
+                "O",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "OLD\tOrder Line Detail",
+            "contents": "OLD=",
+            "kind": [
+                "navigation",
+                "O",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ORD\tOrder References",
+            "contents": "ORD=",
+            "kind": [
+                "navigation",
+                "O",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "OTR\tOrder Trailer",
+            "contents": "OTR=",
+            "kind": [
+                "navigation",
+                "O",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PYT\tPayment Terms",
+            "contents": "PYT=",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SDT\tSupplier Details",
+            "contents": "SDT=",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "STL\tSub-Total (per VAT rate)",
+            "contents": "STL=",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "STX\tStart of Transmission",
+            "contents": "STX=",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TLR\tInvoice Trailer",
+            "contents": "TLR=",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TOT\tFile Totals",
+            "contents": "TOT=",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TYP\tTransaction Type",
+            "contents": "TYP=",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "VRS\tVAT Rate Summary",
+            "contents": "VRS=",
+            "kind": [
+                "navigation",
+                "V",
+                "Segment"
+            ]
+        }
+    ]
+}

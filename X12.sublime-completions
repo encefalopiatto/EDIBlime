@@ -1,0 +1,509 @@
+{
+    "scope": "source.x12",
+    "completions": [
+        {
+            "trigger": "AK1\tFunctional Group Response Header",
+            "contents": "AK1*",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "AK2\tTransaction Set Response Header",
+            "contents": "AK2*",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "AK5\tTransaction Set Response Trailer",
+            "contents": "AK5*",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "AK9\tFunctional Group Response Trailer",
+            "contents": "AK9*",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "AMT\tMonetary Amount",
+            "contents": "AMT*",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "BAK\tBeginning Segment for PO Acknowledgment",
+            "contents": "BAK*",
+            "kind": [
+                "navigation",
+                "B",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "BEG\tBeginning Segment for Purchase Order",
+            "contents": "BEG*",
+            "kind": [
+                "navigation",
+                "B",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "BHT\tBeginning of Hierarchical Transaction",
+            "contents": "BHT*",
+            "kind": [
+                "navigation",
+                "B",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "BIG\tBeginning Segment for Invoice",
+            "contents": "BIG*",
+            "kind": [
+                "navigation",
+                "B",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "BSN\tBeginning Segment for Ship Notice",
+            "contents": "BSN*",
+            "kind": [
+                "navigation",
+                "B",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "CAD\tCarrier Detail",
+            "contents": "CAD*",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "CSH\tSales Requirements",
+            "contents": "CSH*",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "CTP\tPricing Information",
+            "contents": "CTP*",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "CTT\tTransaction Totals",
+            "contents": "CTT*",
+            "kind": [
+                "navigation",
+                "C",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "DMG\tDemographic Information",
+            "contents": "DMG*",
+            "kind": [
+                "navigation",
+                "D",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "DTM\tDate/Time Reference",
+            "contents": "DTM*",
+            "kind": [
+                "navigation",
+                "D",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "FOB\tF.O.B. Related Instructions",
+            "contents": "FOB*",
+            "kind": [
+                "navigation",
+                "F",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "GE\tFunctional Group Trailer",
+            "contents": "GE*",
+            "kind": [
+                "navigation",
+                "G",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "GS\tFunctional Group Header",
+            "contents": "GS*",
+            "kind": [
+                "navigation",
+                "G",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "HL\tHierarchical Level",
+            "contents": "HL*",
+            "kind": [
+                "navigation",
+                "H",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "IEA\tInterchange Control Trailer",
+            "contents": "IEA*",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ISA\tInterchange Control Header",
+            "contents": "ISA*",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ISS\tInvoice Shipment Summary",
+            "contents": "ISS*",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "IT1\tInvoice Baseline Item Data",
+            "contents": "IT1*",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ITD\tTerms of Sale / Deferred Terms",
+            "contents": "ITD*",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "LDT\tLead Time",
+            "contents": "LDT*",
+            "kind": [
+                "navigation",
+                "L",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "LIN\tItem Identification",
+            "contents": "LIN*",
+            "kind": [
+                "navigation",
+                "L",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MAN\tMarks and Numbers",
+            "contents": "MAN*",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MEA\tMeasurements",
+            "contents": "MEA*",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MSG\tMessage Text",
+            "contents": "MSG*",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "N1\tName",
+            "contents": "N1*",
+            "kind": [
+                "navigation",
+                "N",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "N2\tAdditional Name Information",
+            "contents": "N2*",
+            "kind": [
+                "navigation",
+                "N",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "N3\tAddress Information",
+            "contents": "N3*",
+            "kind": [
+                "navigation",
+                "N",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "N4\tGeographic Location",
+            "contents": "N4*",
+            "kind": [
+                "navigation",
+                "N",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "NTE\tNote / Special Instruction",
+            "contents": "NTE*",
+            "kind": [
+                "navigation",
+                "N",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PER\tAdministrative Communications Contact",
+            "contents": "PER*",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PID\tProduct/Item Description",
+            "contents": "PID*",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PKG\tMarking, Packaging, Loading",
+            "contents": "PKG*",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PO1\tPurchase Order Baseline Item Data",
+            "contents": "PO1*",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PO4\tItem Physical Details",
+            "contents": "PO4*",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "POC\tLine Item Change",
+            "contents": "POC*",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PWK\tPaperwork",
+            "contents": "PWK*",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "QTY\tQuantity",
+            "contents": "QTY*",
+            "kind": [
+                "navigation",
+                "Q",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "REF\tReference Identification",
+            "contents": "REF*",
+            "kind": [
+                "navigation",
+                "R",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SAC\tService, Promotion, Allowance or Charge",
+            "contents": "SAC*",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SCH\tLine Item Schedule",
+            "contents": "SCH*",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SE\tTransaction Set Trailer",
+            "contents": "SE*",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SLN\tSubline Item Detail",
+            "contents": "SLN*",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SN1\tItem Detail (Shipment)",
+            "contents": "SN1*",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ST\tTransaction Set Header",
+            "contents": "ST*",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TA1\tInterchange Acknowledgment",
+            "contents": "TA1*",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TD1\tCarrier Details (Quantity and Weight)",
+            "contents": "TD1*",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TD3\tCarrier Details (Equipment)",
+            "contents": "TD3*",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TD5\tCarrier Details (Routing Sequence)",
+            "contents": "TD5*",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TDS\tTotal Monetary Value Summary",
+            "contents": "TDS*",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "TXI\tTax Information",
+            "contents": "TXI*",
+            "kind": [
+                "navigation",
+                "T",
+                "Segment"
+            ]
+        }
+    ]
+}

@@ -13,6 +13,12 @@
     // hovering over EDI text.
     "hover_help": true,
 
+    // Validate envelope integrity every time an EDI file is saved, and mark
+    // problem segments with a squiggly underline. Run "EDI: Validate
+    // Structure" to browse the issues; "EDI: Repair Envelope" fixes counts
+    // and control references automatically.
+    "validate_on_save": false,
+
     // Colour used for the inline hint annotations. Leave empty ("") to inherit
     // a subdued colour from the active colour scheme (the "comment" style).
     // Accepts any CSS colour, e.g. "#7d8799" or "rgba(128,128,128,0.8)".

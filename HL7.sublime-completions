@@ -1,0 +1,248 @@
+{
+    "scope": "source.hl7",
+    "completions": [
+        {
+            "trigger": "AL1\tPatient Allergy Information",
+            "contents": "AL1|",
+            "kind": [
+                "navigation",
+                "A",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "DG1\tDiagnosis",
+            "contents": "DG1|",
+            "kind": [
+                "navigation",
+                "D",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ERR\tError",
+            "contents": "ERR|",
+            "kind": [
+                "navigation",
+                "E",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "EVN\tEvent Type",
+            "contents": "EVN|",
+            "kind": [
+                "navigation",
+                "E",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "FT1\tFinancial Transaction",
+            "contents": "FT1|",
+            "kind": [
+                "navigation",
+                "F",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "GT1\tGuarantor",
+            "contents": "GT1|",
+            "kind": [
+                "navigation",
+                "G",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "IN1\tInsurance",
+            "contents": "IN1|",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "IN2\tInsurance - Additional Info",
+            "contents": "IN2|",
+            "kind": [
+                "navigation",
+                "I",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MSA\tMessage Acknowledgment",
+            "contents": "MSA|",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "MSH\tMessage Header",
+            "contents": "MSH|^~\\&|",
+            "kind": [
+                "navigation",
+                "M",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "NK1\tNext of Kin / Associated Parties",
+            "contents": "NK1|",
+            "kind": [
+                "navigation",
+                "N",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "NTE\tNotes and Comments",
+            "contents": "NTE|",
+            "kind": [
+                "navigation",
+                "N",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "OBR\tObservation Request",
+            "contents": "OBR|",
+            "kind": [
+                "navigation",
+                "O",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "OBX\tObservation / Result",
+            "contents": "OBX|",
+            "kind": [
+                "navigation",
+                "O",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ORC\tCommon Order",
+            "contents": "ORC|",
+            "kind": [
+                "navigation",
+                "O",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PD1\tPatient Additional Demographic",
+            "contents": "PD1|",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PID\tPatient Identification",
+            "contents": "PID|",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PR1\tProcedures",
+            "contents": "PR1|",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PV1\tPatient Visit",
+            "contents": "PV1|",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "PV2\tPatient Visit - Additional Info",
+            "contents": "PV2|",
+            "kind": [
+                "navigation",
+                "P",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "QRD\tQuery Definition",
+            "contents": "QRD|",
+            "kind": [
+                "navigation",
+                "Q",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "QRF\tQuery Filter",
+            "contents": "QRF|",
+            "kind": [
+                "navigation",
+                "Q",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "ROL\tRole",
+            "contents": "ROL|",
+            "kind": [
+                "navigation",
+                "R",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "RXA\tPharmacy/Treatment Administration",
+            "contents": "RXA|",
+            "kind": [
+                "navigation",
+                "R",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "RXR\tPharmacy/Treatment Route",
+            "contents": "RXR|",
+            "kind": [
+                "navigation",
+                "R",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SCH\tScheduling Activity Information",
+            "contents": "SCH|",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        },
+        {
+            "trigger": "SPM\tSpecimen",
+            "contents": "SPM|",
+            "kind": [
+                "navigation",
+                "S",
+                "Segment"
+            ]
+        }
+    ]
+}

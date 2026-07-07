@@ -14,8 +14,9 @@ scope: source.edifact
 contexts:
   main:
     # Service string advice (UNA): the six characters after the tag are
-    # literal delimiter definitions.
-    - match: "(UNA)(.{6})"
+    # literal delimiter definitions. Anchored to the line start so that a
+    # literal "UNA" inside data is not claimed as a service string.
+    - match: "^(UNA)(.{6})"
       captures:
         1: keyword.control.service.edifact
         2: constant.other.delimiters.edifact

@@ -20,6 +20,7 @@ Value handling:
 """
 
 import json
+import re
 
 try:
     from . import edi_core
@@ -27,6 +28,17 @@ try:
 except (ImportError, ValueError):
     import edi_core
     import edi_data
+
+# Control characters sanitized out of ``//`` comments (a newline in raw data
+# would otherwise break the "strip comments -> valid JSON" contract) and out
+# of XML output (illegal in XML 1.0 even as character references).
+_CONTROL_RE = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f]")
+_COMMENT_UNSAFE_RE = re.compile(r"[\x00-\x1f\x7f]+")
+
+
+def _comment_safe(value):
+    """Collapse control characters so ``value`` stays on one comment line."""
+    return _COMMENT_UNSAFE_RE.sub(" ", value)
 
 
 # ---------------------------------------------------------------------------
@@ -123,15 +135,16 @@ def to_jsonc(text, dialect=None):
 
     segments = dialect.split_segments(text)
     for si, seg in enumerate(segments):
+        tag = _comment_safe(seg.tag)
         name = edi_data.segment_name(dialect.key, seg.tag)
         detail = edi_data.segment_detail(dialect.key, seg.tag)
         el_names = edi_data.element_names(dialect.key, seg.tag)
 
         push("")
         if name:
-            push("    // %s — %s" % (seg.tag, name))
+            push("    // %s — %s" % (tag, name))
         else:
-            push("    // %s" % seg.tag)
+            push("    // %s" % tag)
         for wrapped in _wrap(detail, 96):
             push("    // %s" % wrapped)
 
@@ -148,7 +161,13 @@ def to_jsonc(text, dialect=None):
             for ei, element in enumerate(elements):
                 comma = "," if ei < len(elements) - 1 else ""
                 label = el_names[ei] if ei < len(el_names) else ""
-                comment = "  // %d. %s" % (ei + 1, label) if label else "  // %d" % (ei + 1)
+                code = element if isinstance(element, str) else element[0]
+                decoded = edi_data.qualifier_label(dialect.key, seg.tag, ei + 1, code)
+                comment = "  // %d" % (ei + 1)
+                if label:
+                    comment += ". %s" % label
+                if decoded:
+                    comment += " [%s = %s]" % (_comment_safe(code), decoded)
                 push("        %s%s%s" % (dumps(element), comma, comment))
             push("      ]")
         push("    }%s" % ("," if si < len(segments) - 1 else ""))
@@ -222,8 +241,12 @@ def to_xml(text, dialect=None):
         lines.append("  <segment%s>" % attrs)
         for ei, components in enumerate(elements):
             el_attrs = ' index="%d"' % (ei + 1)
-            if ei < len(el_names):
+            if ei < len(el_names) and el_names[ei]:
                 el_attrs += ' name="%s"' % _xml_attr(el_names[ei])
+            decoded = edi_data.qualifier_label(
+                dialect.key, seg.tag, ei + 1, components[0] if components else "")
+            if decoded:
+                el_attrs += ' decoded="%s"' % _xml_attr(decoded)
             if len(components) == 1:
                 lines.append("    <element%s>%s</element>"
                              % (el_attrs, _xml_text(components[0])))
@@ -238,6 +261,10 @@ def to_xml(text, dialect=None):
 
 
 def _xml_text(value):
+    # Characters outside the XML 1.0 Char production are illegal even as
+    # character references (EDI payloads pick them up from MLLP framing,
+    # stray separators, binary garbage); replace them visibly with U+FFFD.
+    value = _CONTROL_RE.sub("�", value)
     return (value.replace("&", "&amp;")
                  .replace("<", "&lt;")
                  .replace(">", "&gt;"))

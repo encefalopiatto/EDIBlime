@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-EDIBlime -- beautify, minify, annotate, explain, validate and convert EDI
-files inside Sublime Text.
+EDIBlime -- beautify, minify, annotate, explain, validate, repair and convert
+EDI files inside Sublime Text.
 
 This module is the (thin) Sublime Text integration layer. All parsing,
 formatting, conversion and validation logic lives in :mod:`edi_core`,
@@ -14,16 +14,26 @@ Commands provided (command palette / menus / key bindings):
 * ``edi_minify``          -- collapse back to a single compliant line
 * ``edi_toggle_hints``    -- non-destructive inline segment descriptions
 * ``edi_explain_segment`` -- popup explaining the segment under the caret,
-                             element by element
+                             element by element (with qualifier decoding)
 * ``edi_validate``        -- check envelope integrity (counts / references)
+* ``edi_repair``          -- recompute counts and re-sync control references
+* ``edi_outline``         -- browse the message structure in a quick panel
 * ``edi_convert``         -- convert the buffer to JSON, JSONC or XML
 * ``edi_set_dialect``     -- override the auto-detected dialect for a view
 * ``edi_detect_syntax``   -- (re)apply the matching syntax to the view
 
 An :class:`EdiListener` auto-detects the dialect on load, applies the matching
 syntax, keeps hint annotations in sync while editing, shows segment help on
-hover, and reports the segment under the caret in the status bar.
+hover, and reports the segment/element under the caret in the status bar.
+
+Performance notes: detection results and parsed segment spans are cached per
+view and keyed to ``view.change_count()``, so caret movement and hovering
+never re-parse an unchanged buffer, and none of the listeners do any work in
+views that were not positively identified as EDI.
 """
+
+import bisect
+import os
 
 import sublime
 import sublime_plugin
@@ -39,13 +49,20 @@ _PACKAGE = (__package__ or "EDIBlime").split(".")[0]
 
 SETTINGS_FILE = "EDIBlime.sublime-settings"
 HINT_REGION_KEY = "edi_hints"
+ISSUE_REGION_KEY = "edi_issues"
 STATUS_KEY = "edi_status"
 # Per-view flag (stored in view settings) tracking whether hints are shown.
 HINTS_ENABLED_SETTING = "edi_hints_enabled"
+# Per-view detection verdict: set to True/False once _auto has looked at real
+# content. All listeners gate on this so non-EDI views cost nothing.
+IS_EDI_SETTING = "edi_is_edi"
 # Per-view dialect override chosen via ``edi_set_dialect``.
 DIALECT_OVERRIDE_SETTING = "edi_dialect_override"
-# Views larger than this are left alone (annotations would be too slow).
+# Views larger than this are left alone (parsing/annotating would be too slow).
 MAX_AUTO_SIZE = 5 * 1024 * 1024
+# is_enabled() may run a live detection on buffers up to this size when the
+# view has not been classified yet (fresh paste, palette opened immediately).
+MAX_ENABLED_PROBE_SIZE = 256 * 1024
 
 # Maps a resolved dialect family to the bundled ``.sublime-syntax`` file.
 SYNTAX_FOR_DIALECT = {
@@ -89,7 +106,63 @@ def _resolve_dialect(view, text=None):
 
 
 def _looks_like_edi(view):
+    """Cheap enablement check for commands.
+
+    Uses the cached per-view verdict when available; falls back to a live
+    detection only for buffers small enough that it cannot hurt (so commands
+    still work on a fresh paste before the listener has classified the view).
+    """
+    verdict = view.settings().get(IS_EDI_SETTING)
+    if verdict is not None:
+        return bool(verdict)
+    if view.size() == 0 or view.size() > MAX_ENABLED_PROBE_SIZE:
+        return False
     return _resolve_dialect(view) is not None
+
+
+# ---------------------------------------------------------------------------
+# Per-view analysis cache (dialect + parsed spans, keyed by change_count)
+# ---------------------------------------------------------------------------
+
+_analysis_cache = {}  # view_id -> (change_count, dialect, spans)
+
+
+def _cached_analysis(view):
+    """Return ``(dialect, spans)`` for the view, parsing at most once per edit.
+
+    ``spans`` is ``[(start, end, Segment), ...]``. Returns ``(None, None)``
+    when the buffer is too large or is not EDI.
+    """
+    if view.size() > MAX_AUTO_SIZE:
+        return None, None
+    vid = view.id()
+    change_count = view.change_count()
+    hit = _analysis_cache.get(vid)
+    if hit is not None and hit[0] == change_count:
+        return hit[1], hit[2]
+    text = _view_text(view)
+    dialect = _resolve_dialect(view, text)
+    spans = dialect.segment_spans(text) if dialect is not None else None
+    _analysis_cache[vid] = (change_count, dialect, spans)
+    return dialect, spans
+
+
+def _drop_view_state(view):
+    _analysis_cache.pop(view.id(), None)
+    _pending.pop(view.id(), None)
+
+
+def _span_at(spans, point):
+    """Binary-search the span containing ``point``; None when between spans."""
+    if not spans:
+        return None
+    idx = bisect.bisect_right([s[0] for s in spans], point) - 1
+    if idx < 0:
+        return None
+    start, end, seg = spans[idx]
+    if start <= point <= end:
+        return spans[idx]
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -105,13 +178,16 @@ class EdiBeautifyCommand(sublime_plugin.TextCommand):
         if dialect is None:
             sublime.status_message("EDI: could not detect an EDI dialect")
             return
-        newline = "\n" if self.view.line_endings() != "Windows" else "\r\n"
-        result = edi_core.beautify(text, dialect=dialect, newline=newline)
+        # Always insert "\n": Sublime buffers store line breaks as "\n"
+        # internally and convert to the view's line_endings only on save;
+        # inserting "\r\n" would leave literal CR characters in the buffer.
+        result = edi_core.beautify(text, dialect=dialect, newline="\n")
         if result == text:
             sublime.status_message("EDI: already beautified")
             return
         self.view.replace(edit, sublime.Region(0, self.view.size()), result)
         sublime.status_message("EDI: beautified %s" % dialect.label)
+        self.view.settings().set(IS_EDI_SETTING, True)
         _apply_syntax(self.view, dialect)
         if self.view.settings().get(HINTS_ENABLED_SETTING):
             _refresh_hints(self.view)
@@ -132,8 +208,10 @@ class EdiMinifyCommand(sublime_plugin.TextCommand):
         result = edi_core.minify(text, dialect=dialect)
         self.view.replace(edit, sublime.Region(0, self.view.size()), result)
         sublime.status_message("EDI: minified %s" % dialect.label)
-        # Inline hints make no sense on a single line; clear them.
+        # Inline hints make no sense on a single line; turn them off properly
+        # so the toggle state stays in sync.
         self.view.erase_regions(HINT_REGION_KEY)
+        self.view.settings().set(HINTS_ENABLED_SETTING, False)
 
     def is_enabled(self):
         return _looks_like_edi(self.view)
@@ -158,7 +236,7 @@ class EdiToggleHintsCommand(sublime_plugin.TextCommand):
 
 
 # ---------------------------------------------------------------------------
-# Explain / validate commands
+# Explain / validate / repair / outline commands
 # ---------------------------------------------------------------------------
 
 class EdiExplainSegmentCommand(sublime_plugin.TextCommand):
@@ -189,12 +267,12 @@ class EdiValidateCommand(sublime_plugin.TextCommand):
     """Validate envelope integrity and browse issues in a quick panel."""
 
     def run(self, edit):
-        text = _view_text(self.view)
-        dialect = _resolve_dialect(self.view, text)
+        dialect, _spans = _cached_analysis(self.view)
         if dialect is None:
             sublime.status_message("EDI: could not detect an EDI dialect")
             return
-        issues = edi_validate.validate(text, dialect)
+        issues = edi_validate.validate(_view_text(self.view), dialect)
+        _render_issue_regions(self.view, issues)
         if not issues:
             sublime.message_dialog(
                 "EDI: %s structure is valid.\n\n"
@@ -202,35 +280,118 @@ class EdiValidateCommand(sublime_plugin.TextCommand):
                 % dialect.label)
             return
 
-        self._issues = issues
+        view = self.view
+        # Keep everything local (no state on the command instance) and restore
+        # the original position when the panel is cancelled.
+        original_sel = [(r.a, r.b) for r in view.sel()]
+        original_viewport = view.viewport_position()
+
         items = []
         for issue in issues:
-            row, col = self.view.rowcol(issue["offset"])
+            row, _col = view.rowcol(issue["offset"])
             items.append(sublime.QuickPanelItem(
                 trigger=issue["message"],
                 details="",
                 annotation="line %d" % (row + 1),
                 kind=_KIND_FOR_SEVERITY.get(issue["severity"], sublime.KIND_AMBIGUOUS),
             ))
-        window = self.view.window()
+
+        def jump_to(index):
+            if index < 0:
+                return
+            offset = issues[index]["offset"]
+            view.show_at_center(offset)
+            view.sel().clear()
+            view.sel().add(sublime.Region(offset))
+
+        def on_done(index):
+            if index >= 0:
+                jump_to(index)
+                return
+            view.sel().clear()
+            for a, b in original_sel:
+                view.sel().add(sublime.Region(a, b))
+            view.set_viewport_position(original_viewport)
+
+        window = view.window()
         if window:
-            window.show_quick_panel(
-                items, self._on_done, on_highlight=self._jump_to)
+            window.show_quick_panel(items, on_done, on_highlight=jump_to)
         error_count = sum(1 for i in issues if i["severity"] == "error")
         sublime.status_message(
             "EDI: %d issue(s), %d error(s)" % (len(issues), error_count))
 
-    def _jump_to(self, index):
-        if index < 0:
-            return
-        offset = self._issues[index]["offset"]
-        self.view.show_at_center(offset)
-        self.view.sel().clear()
-        self.view.sel().add(sublime.Region(offset))
+    def is_enabled(self):
+        return _looks_like_edi(self.view)
 
-    def _on_done(self, index):
-        if index >= 0:
-            self._jump_to(index)
+
+class EdiRepairCommand(sublime_plugin.TextCommand):
+    """Recompute envelope counts and re-sync control references."""
+
+    def run(self, edit):
+        text = _view_text(self.view)
+        dialect = _resolve_dialect(self.view, text)
+        if dialect is None:
+            sublime.status_message("EDI: could not detect an EDI dialect")
+            return
+        fixed, changed = edi_validate.repair(text, dialect)
+        if not changed or fixed == text:
+            sublime.status_message("EDI: envelope already consistent")
+            return
+        self.view.replace(edit, sublime.Region(0, self.view.size()), fixed)
+        # The old issue squiggles refer to pre-repair offsets.
+        self.view.erase_regions(ISSUE_REGION_KEY)
+        sublime.status_message(
+            "EDI: repaired %d envelope segment(s)" % changed)
+
+    def is_enabled(self):
+        return _looks_like_edi(self.view)
+
+
+class EdiOutlineCommand(sublime_plugin.TextCommand):
+    """Browse the message structure (all segments) in a quick panel."""
+
+    def run(self, edit):
+        dialect, spans = _cached_analysis(self.view)
+        if dialect is None or not spans:
+            sublime.status_message("EDI: could not detect an EDI dialect")
+            return
+
+        view = self.view
+        original_sel = [(r.a, r.b) for r in view.sel()]
+        original_viewport = view.viewport_position()
+
+        items = []
+        offsets = []
+        for start, _end, seg in spans:
+            name = edi_data.segment_name(dialect.key, seg.tag)
+            preview = seg.content[:80].replace("\n", " ")
+            items.append(sublime.QuickPanelItem(
+                trigger="%s — %s" % (seg.tag, name) if name else seg.tag,
+                details="",
+                annotation=preview,
+                kind=(sublime.KIND_ID_NAVIGATION, seg.tag[0], "Segment"),
+            ))
+            offsets.append(start)
+
+        def jump_to(index):
+            if index < 0:
+                return
+            view.show_at_center(offsets[index])
+            view.sel().clear()
+            view.sel().add(sublime.Region(offsets[index]))
+
+        def on_done(index):
+            if index >= 0:
+                jump_to(index)
+                return
+            view.sel().clear()
+            for a, b in original_sel:
+                view.sel().add(sublime.Region(a, b))
+            view.set_viewport_position(original_viewport)
+
+        window = view.window()
+        if window:
+            window.show_quick_panel(items, on_done, on_highlight=jump_to)
 
     def is_enabled(self):
         return _looks_like_edi(self.view)
@@ -241,6 +402,22 @@ _KIND_FOR_SEVERITY = {
     "warning": (sublime.KIND_ID_COLOR_YELLOWISH, "W", "Warning"),
     "info": (sublime.KIND_ID_COLOR_BLUISH, "I", "Info"),
 }
+
+
+def _render_issue_regions(view, issues):
+    """Squiggle the segments that have errors/warnings (info is panel-only)."""
+    view.erase_regions(ISSUE_REGION_KEY)
+    regions = [sublime.Region(i["offset"], i["offset"] + 3)
+               for i in issues if i["severity"] in ("error", "warning")]
+    if regions:
+        view.add_regions(
+            ISSUE_REGION_KEY,
+            regions,
+            "region.redish",
+            "dot",
+            sublime.DRAW_SQUIGGLY_UNDERLINE | sublime.DRAW_NO_FILL |
+            sublime.DRAW_NO_OUTLINE,
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -280,13 +457,15 @@ class EdiConvertCommand(sublime_plugin.TextCommand):
         out.set_scratch(True)
         out.set_name(self._output_name(extension))
         out.assign_syntax(_find_syntax(syntax))
+        # Mark the converted document as classified so the EDI listeners
+        # never try to analyse it.
+        out.settings().set(IS_EDI_SETTING, False)
         out.run_command("append", {"characters": result})
         sublime.status_message(
             "EDI: converted %s to %s" % (dialect.label, format.upper()))
 
     def _output_name(self, extension):
         name = self.view.name() or self.view.file_name() or "message"
-        import os
         base = os.path.splitext(os.path.basename(name))[0]
         return base + extension
 
@@ -311,23 +490,23 @@ class EdiSetDialectCommand(sublime_plugin.TextCommand):
         if dialect is not None:
             self._apply(dialect)
             return
-        self._keys = sorted(edi_data.SEGMENTS.keys())
-        items = [self._label_for(k) for k in self._keys]
+        keys = sorted(edi_data.SEGMENTS.keys())
+        items = [self._label_for(k) for k in keys]
         window = self.view.window()
         if window:
-            window.show_quick_panel(items, self._on_choose)
+            window.show_quick_panel(
+                items,
+                lambda index: self._apply(keys[index]) if index >= 0 else None)
 
     def _label_for(self, key):
         if key in edi_data.EDIFACT_SUBSETS:
             return "%s (EDIFACT subset)" % edi_data.EDIFACT_SUBSETS[key]
         return edi_data.DIALECTS[edi_data.dialect_family(key)]["label"]
 
-    def _on_choose(self, index):
-        if index >= 0:
-            self._apply(self._keys[index])
-
     def _apply(self, dialect):
         self.view.settings().set(DIALECT_OVERRIDE_SETTING, dialect)
+        self.view.settings().set(IS_EDI_SETTING, True)
+        _drop_view_state(self.view)
         resolved = edi_core.Dialect.from_family(dialect)
         _apply_syntax(self.view, resolved)
         if self.view.settings().get(HINTS_ENABLED_SETTING):
@@ -340,12 +519,17 @@ class EdiDetectSyntaxCommand(sublime_plugin.TextCommand):
 
     def run(self, edit):
         self.view.settings().erase(DIALECT_OVERRIDE_SETTING)
+        _drop_view_state(self.view)
         dialect = _resolve_dialect(self.view)
+        self.view.settings().set(IS_EDI_SETTING, dialect is not None)
         if dialect is None:
             sublime.status_message("EDI: could not detect an EDI dialect")
             return
         _apply_syntax(self.view, dialect)
         sublime.status_message("EDI: detected %s" % dialect.label)
+
+    def is_enabled(self):
+        return self.view.size() <= MAX_AUTO_SIZE
 
 
 # ---------------------------------------------------------------------------
@@ -376,19 +560,16 @@ def _hint_color(view):
 def _refresh_hints(view):
     """Recompute and render inline hint annotations. Returns the segment count."""
     view.erase_regions(HINT_REGION_KEY)
-    text = _view_text(view)
-    dialect = _resolve_dialect(view, text)
-    if dialect is None:
-        return 0
-    spans = edi_core.describe_spans(text, dialect=dialect)
-    if not spans:
+    dialect, spans = _cached_analysis(view)
+    if dialect is None or not spans:
         return 0
 
     verbose = _settings().get("hints_show_descriptions", False)
     color = _hint_color(view)
     regions = []
     annotations = []
-    for start, end, seg, name in spans:
+    for start, end, seg in spans:
+        name = edi_data.segment_name(dialect.key, seg.tag)
         if not name:
             continue
         label = "%s &mdash; %s" % (_escape(seg.tag), _escape(name))
@@ -437,22 +618,19 @@ p.detail { margin: 0.4rem 0; }
 .idx { color: color(var(--foreground) alpha(0.5)); }
 .val { color: var(--greenish); }
 .name { color: color(var(--foreground) alpha(0.75)); }
+.decoded { color: var(--bluish); }
 """
 
 
 def _segment_popup_html(view, point):
     """Build the explain-segment popup for the segment containing ``point``."""
-    text = _view_text(view)
-    dialect = _resolve_dialect(view, text)
+    dialect, spans = _cached_analysis(view)
     if dialect is None:
         return None
-    target = None
-    for start, end, seg in dialect.segment_spans(text):
-        if start <= point <= end:
-            target = seg
-            break
-    if target is None:
+    hit = _span_at(spans, point)
+    if hit is None:
         return None
+    _start, _end, target = hit
 
     tag = target.tag
     name = edi_data.segment_name(dialect.key, tag)
@@ -476,8 +654,12 @@ def _segment_popup_html(view, point):
             if not value:
                 continue
             label = names[i] if i < len(names) else ""
+            decoded = edi_data.qualifier_label(
+                dialect.key, tag, i + 1, components[0])
             row = ('<div class="el"><span class="idx">%d.</span> '
                    '<span class="val">%s</span>' % (i + 1, _escape(value)))
+            if decoded:
+                row += ' <span class="decoded">= %s</span>' % _escape(decoded)
             if label:
                 row += ' <span class="name">&mdash; %s</span>' % _escape(label)
             row += "</div>"
@@ -499,20 +681,24 @@ class EdiListener(sublime_plugin.EventListener):
 
     def on_activated_async(self, view):
         # Handle buffers that were already open when the plugin loaded.
-        if view.settings().get("edi_seen"):
-            return
-        self._auto(view)
+        if view.settings().get(IS_EDI_SETTING) is None:
+            self._auto(view)
 
     def on_modified_async(self, view):
-        if view.settings().get(HINTS_ENABLED_SETTING):
-            _debounce(view)
+        settings = view.settings()
+        if settings.get(IS_EDI_SETTING) is None:
+            # A fresh (e.g. new/pasted) buffer that was empty when activated:
+            # classify it once it has content, debounced while typing settles.
+            if view.size() > 0:
+                _debounce(view, lambda: self._auto(view))
+            return
+        if settings.get(HINTS_ENABLED_SETTING):
+            _debounce(view, lambda: _refresh_hints(view))
 
     def on_selection_modified_async(self, view):
-        if not view.settings().get("edi_seen"):
+        if not view.settings().get(IS_EDI_SETTING):
             return
-        if view.size() > MAX_AUTO_SIZE:
-            return
-        dialect = _resolve_dialect(view)
+        dialect, spans = _cached_analysis(view)
         if dialect is None:
             view.erase_status(STATUS_KEY)
             return
@@ -520,25 +706,32 @@ class EdiListener(sublime_plugin.EventListener):
         if not sel:
             return
         point = sel[0].begin()
-        text = _view_text(view)
-        for start, end, seg in dialect.segment_spans(text):
-            if start <= point <= end:
-                name = edi_data.segment_name(dialect.key, seg.tag)
-                status = "%s · %s" % (dialect.label, seg.tag)
-                if name:
-                    status += " — %s" % name
-                view.set_status(STATUS_KEY, status)
-                return
-        view.set_status(STATUS_KEY, dialect.label)
+        hit = _span_at(spans, point)
+        if hit is None:
+            view.set_status(STATUS_KEY, dialect.label)
+            return
+        start, _end, seg = hit
+        status = "%s · %s" % (dialect.label, seg.tag)
+        elem_no, comp_no = edi_core.element_at(seg, point - start)
+        if elem_no > 0:
+            status += "-%d" % elem_no
+            if comp_no > 1 or dialect.component_separator in seg.content:
+                status += ".%d" % comp_no
+            names = edi_data.element_names(dialect.key, seg.tag)
+            if elem_no <= len(names) and names[elem_no - 1]:
+                status += " — %s" % names[elem_no - 1]
+        else:
+            name = edi_data.segment_name(dialect.key, seg.tag)
+            if name:
+                status += " — %s" % name
+        view.set_status(STATUS_KEY, status)
 
     def on_hover(self, view, point, hover_zone):
         if hover_zone != sublime.HOVER_TEXT:
             return
+        if not view.settings().get(IS_EDI_SETTING):
+            return
         if not _settings().get("hover_help", True):
-            return
-        if view.size() > MAX_AUTO_SIZE or not view.settings().get("edi_seen"):
-            return
-        if not _looks_like_edi(view):
             return
         html = _segment_popup_html(view, point)
         if html is None:
@@ -551,11 +744,32 @@ class EdiListener(sublime_plugin.EventListener):
             max_height=560,
         )
 
+    def on_post_save_async(self, view):
+        if not view.settings().get(IS_EDI_SETTING):
+            return
+        if not _settings().get("validate_on_save", False):
+            return
+        dialect, _spans = _cached_analysis(view)
+        if dialect is None:
+            return
+        issues = edi_validate.validate(_view_text(view), dialect)
+        _render_issue_regions(view, issues)
+        problems = [i for i in issues if i["severity"] in ("error", "warning")]
+        if problems:
+            sublime.status_message(
+                "EDI: %d validation issue(s) — run \"EDI: Validate Structure\""
+                % len(problems))
+
+    def on_close(self, view):
+        _drop_view_state(view)
+
     def _auto(self, view):
-        view.settings().set("edi_seen", True)
         if view.size() == 0 or view.size() > MAX_AUTO_SIZE:
+            # Not classified yet: leave IS_EDI_SETTING unset so a later
+            # modification (paste into a new buffer) triggers classification.
             return
         dialect = _resolve_dialect(view)
+        view.settings().set(IS_EDI_SETTING, dialect is not None)
         if dialect is None:
             return
         _apply_syntax(view, dialect)
@@ -564,17 +778,17 @@ class EdiListener(sublime_plugin.EventListener):
             _refresh_hints(view)
 
 
-# Simple debounce so hints only recompute after typing settles.
+# Debounce helper so expensive work only runs after typing settles.
 _pending = {}
 
 
-def _debounce(view, delay=350):
+def _debounce(view, callback, delay=350):
     vid = view.id()
     token = _pending.get(vid, 0) + 1
     _pending[vid] = token
 
     def go():
         if _pending.get(vid) == token and view.is_valid():
-            _refresh_hints(view)
+            callback()
 
     sublime.set_timeout_async(go, delay)

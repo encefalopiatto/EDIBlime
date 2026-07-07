@@ -323,7 +323,7 @@ EDIFACT_DETAILS = {
     "CTA": "Names a department or person that serves as a contact for the party in the preceding NAD, qualified by function (e.g. OC = order contact, AD = accounting).",
     "COM": "Gives a communication number for the preceding contact: the number or address plus a channel qualifier, e.g. TE = telephone, EM = e-mail, FX = fax.",
     "FII": "Identifies a financial institution and account: account holder number (e.g. IBAN), institution name/code (e.g. BIC) — typically the beneficiary's bank in payment or invoice messages.",
-    "CUX": "Establishes the currencies used in the message: a reference currency and optionally a target currency with the applicable exchange rate, e.g. 2:EUR:9 = EUR is the invoicing currency.",
+    "CUX": "Establishes the currencies used in the message: a reference currency and optionally a target currency with the applicable exchange rate, e.g. 2:EUR:4 = EUR is the invoicing currency, 2:EUR:9 = EUR is the order currency.",
     "PAT": "States the payment terms basis: terms type (e.g. 1 = basic, 22 = cash discount), and the reference date plus number of days on which the terms are based (superseded by PYT in later directories).",
     "PYT": "States the payment terms: terms type qualifier, and how the payment period is computed (reference date code and number of days).",
     "TDT": "Specifies transport details for a stage of the journey: stage qualifier (e.g. 20 = main carriage), conveyance reference, mode of transport (e.g. 30 = road), carrier identification and means of transport identity.",
@@ -343,7 +343,7 @@ EDIFACT_DETAILS = {
     "APR": "Gives additional price information such as price multipliers, mark-ups or trade class rates.",
     "RNG": "Defines a range (minimum and maximum) that qualifies the preceding segment, e.g. an allowance valid for a quantity range.",
     "TAX": "Specifies duty, tax or fee details: function (7 = tax), type (VAT), rate or amount, and the tax category (e.g. S = standard rate, Z = zero rated, E = exempt). Amounts usually follow in MOA+124.",
-    "PCD": "States a percentage, qualified by purpose: 1 = allowance, 2 = charge, 3 = discount, 12 = basis for allowance/charge calculation.",
+    "PCD": "States a percentage, qualified by purpose: 1 = allowance, 2 = charge, 3 = allowance or charge, 12 = discount.",
     "ALC": "Introduces an allowance (A) or charge (C) that applies to the message or line: sequence and calculation information plus the reason code (e.g. FC = freight charge, DI = discount). Details follow in PCD (percentage), MOA (amount) or RTE (rate).",
     "PCI": "Specifies how packages are marked: marking instruction code and the actual marks and numbers on the packages.",
     "GIN": "Carries goods identity numbers, qualified by type: BJ = SSCC (serial shipping container code), BX = batch number, SN = serial number. Ranges may be given as pairs.",
@@ -372,7 +372,7 @@ X12_DETAILS = {
     "SE": "Closes a transaction set. Carries the number of segments in the set (counting ST and SE themselves) and repeats the control number from ST02, allowing integrity checking.",
     "TA1": "Interchange-level acknowledgment: reports whether a received interchange envelope (identified by its control number, date and time) was accepted, accepted with errors, or rejected, with a note code giving the reason.",
     "BEG": "Begins an 850 purchase order: transaction set purpose (00 = original, 01 = cancellation), purchase order type (NE = new order, SA = stand-alone), the purchase order number and the order date.",
-    "BAK": "Begins an 855 purchase order acknowledgment: purpose code, acknowledgment type (AC = acknowledge with detail, AD = acknowledge with detail and change), the original PO number and its date.",
+    "BAK": "Begins an 855 purchase order acknowledgment: purpose code, acknowledgment type (AC = acknowledge with detail and change, AD = acknowledge with detail, no change), the original PO number and its date.",
     "BIG": "Begins an 810 invoice: invoice date and invoice number, plus the purchase order date and number the invoice refers to, and the transaction type code.",
     "BSN": "Begins an 856 ship notice/manifest: purpose code, the shipment identification number, date and time of the notice, and the hierarchical structure code describing how the HL loops are organised (e.g. 0001 = shipment/order/pack/item).",
     "BHT": "Begins a hierarchical transaction (270/271 eligibility, 837 claims, ...): the hierarchical structure code, transaction purpose, a reference identification, and the creation date/time.",
@@ -594,7 +594,7 @@ EDIFACT_ELEMENT_NAMES = {
         "Calculation sequence",
         "Reason (code, e.g. FC = freight, DI = discount)",
     ],
-    "PCD": ["Percentage (qualifier : value, 1 = allowance, 2 = charge)"],
+    "PCD": ["Percentage (qualifier : value, 1 = allowance, 2 = charge, 3 = allowance or charge, 12 = discount)"],
     "PAC": ["Number of packages", "Handling (instructions)", "Package type (CT = carton, PX = pallet)"],
     "MEA": [
         "Purpose (AAE = measurement)",
@@ -822,15 +822,21 @@ TRADACOMS_ELEMENT_NAMES = {
     "FIL": ["File generation number", "File version number", "File creation date (YYMMDD)"],
     "ORD": ["Customer's order number : date", "Supplier's order number : date", "Order code"],
     "CLO": ["Customer's location (ANA code : own code)", "Location name", "Location address"],
+    # Positions verified against real ORDERS:9 traffic (and samples/): the
+    # item code composite sits at 2, the ordered quantity at 5 and the
+    # description at 10. Unlabelled positions render without a name rather
+    # than guessing.
     "OLD": [
         "Line number",
+        "Traded unit product code (EAN/DUN [: supplier's code : type, EN = EAN])",
+        "Consumer unit product code",
         "Supplier's product code",
-        "Consumer unit EAN",
-        "Traded unit code (EAN/DUN)",
-        "Number of traded units ordered",
+        "Ordered quantity (amount : unit)",
         "Consumer units in traded unit",
-        "Cost price per traded unit",
-        "Description",
+        "",
+        "",
+        "",
+        "Traded unit description",
     ],
     "OTR": ["Number of order lines in the message"],
     "IRF": ["Invoice number", "Invoice date (YYMMDD)", "Tax point date (YYMMDD)"],
@@ -967,6 +973,205 @@ ELEMENT_NAMES = {
 
 
 # ---------------------------------------------------------------------------
+# Qualifier code decoding
+# ---------------------------------------------------------------------------
+#
+# ``tag -> element number (1-based) -> code -> meaning``. The decode applies
+# to the *first component* of the given element. Element numbers follow the
+# same convention as ``ELEMENT_NAMES`` (HL7: standard field numbering, so
+# MSH-9 is element 9). Only widely used codes are listed; unknown codes simply
+# render undecoded.
+
+EDIFACT_QUALIFIERS = {
+    "BGM": {1: {
+        "220": "Purchase order", "221": "Blanket order", "224": "Rush order",
+        "231": "Purchase order change request", "310": "Offer/quotation",
+        "315": "Contract", "325": "Pro forma invoice", "326": "Partial invoice",
+        "351": "Despatch advice", "380": "Commercial invoice",
+        "381": "Credit note", "385": "Consolidated invoice",
+        "389": "Self-billed invoice", "393": "Factored invoice",
+        "455": "Extended credit advice", "481": "Remittance advice",
+    }},
+    "DTM": {1: {
+        "2": "Requested delivery date", "10": "Shipment date/time, requested",
+        "11": "Despatch date", "17": "Estimated delivery date",
+        "35": "Actual delivery date", "50": "Goods receipt date",
+        "63": "Latest delivery date", "64": "Earliest delivery date",
+        "69": "Promised delivery date", "76": "Scheduled delivery date",
+        "137": "Document/message date", "171": "Reference date",
+        "200": "Pick-up date", "454": "Accounting period",
+    }},
+    "QTY": {1: {
+        "12": "Despatched quantity", "21": "Ordered quantity",
+        "46": "Delivered quantity", "47": "Invoiced quantity",
+        "48": "Received quantity", "59": "Consumer units in traded unit",
+        "61": "Return quantity", "83": "Backorder quantity",
+        "113": "Quantity to be delivered", "192": "Free goods quantity",
+    }},
+    "NAD": {1: {
+        "BY": "Buyer", "SU": "Supplier", "DP": "Delivery party",
+        "IV": "Invoicee", "SF": "Ship from", "ST": "Ship to",
+        "CN": "Consignee", "CZ": "Consignor", "SE": "Seller",
+        "UC": "Ultimate consignee", "WH": "Warehouse keeper",
+        "PE": "Payee", "PR": "Payer", "DS": "Distributor",
+    }},
+    "RFF": {1: {
+        "ON": "Buyer's order number", "IV": "Invoice number",
+        "DQ": "Delivery note number", "CT": "Contract number",
+        "AAK": "Despatch advice number", "VN": "Supplier's order number",
+        "PL": "Price list number", "CR": "Customer reference",
+        "ALO": "Receiving advice number", "PD": "Promotion deal number",
+        "ABO": "Originator's reference",
+    }},
+    "MOA": {1: {
+        "8": "Allowance or charge amount", "52": "Discount amount",
+        "66": "Goods item total", "77": "Invoice amount",
+        "79": "Total line items amount", "124": "Tax amount",
+        "125": "Taxable amount", "128": "Total amount",
+        "203": "Line item amount", "260": "Total credits",
+    }},
+    "PRI": {1: {
+        "AAA": "Net unit price", "AAB": "Gross unit price",
+        "AAE": "Information price, excl. allowances/charges",
+        "AAF": "Information price, excl. tax",
+    }},
+    "LOC": {1: {
+        "5": "Place of departure", "7": "Place of delivery",
+        "8": "Place of destination", "9": "Place of loading",
+        "11": "Place of discharge", "18": "Warehouse",
+    }},
+    "PCD": {1: {
+        "1": "Allowance", "2": "Charge", "3": "Allowance or charge",
+        "12": "Discount",
+    }},
+    "FTX": {1: {
+        "AAI": "General information", "DEL": "Delivery instructions",
+        "INV": "Invoice instruction", "PUR": "Purchasing information",
+        "REG": "Regulatory information", "ZZZ": "Mutually defined",
+    }},
+    "ALC": {1: {"A": "Allowance", "C": "Charge"}},
+    "CNT": {1: {"1": "Total quantity", "2": "Number of line items"}},
+    "UNS": {1: {"D": "Detail section", "S": "Summary section"}},
+    "IMD": {1: {"C": "Coded description", "F": "Free-form description"}},
+    "TAX": {1: {"5": "Customs duty", "7": "Tax"}},
+    "PAC": {3: {"CT": "Carton", "PX": "Pallet", "BX": "Box", "PK": "Package"}},
+    "GIN": {1: {"BJ": "SSCC", "BX": "Batch number", "SN": "Serial number"}},
+}
+
+X12_QUALIFIERS = {
+    "ST": {1: {
+        "204": "Motor Carrier Load Tender", "210": "Motor Carrier Freight Invoice",
+        "270": "Eligibility Inquiry", "271": "Eligibility Response",
+        "810": "Invoice", "820": "Payment Order / Remittance Advice",
+        "824": "Application Advice", "830": "Planning Schedule",
+        "834": "Benefit Enrollment", "835": "Health Care Claim Payment",
+        "837": "Health Care Claim", "846": "Inventory Advice",
+        "850": "Purchase Order", "855": "PO Acknowledgment",
+        "856": "Ship Notice / Manifest", "860": "PO Change Request",
+        "864": "Text Message", "940": "Warehouse Shipping Order",
+        "945": "Warehouse Shipping Advice", "997": "Functional Acknowledgment",
+    }},
+    "GS": {1: {
+        "PO": "Purchase orders (850)", "IN": "Invoices (810)",
+        "SH": "Ship notices (856)", "FA": "Functional acknowledgments (997)",
+        "PR": "PO acknowledgments (855)", "PC": "PO changes (860)",
+        "OW": "Warehouse orders (940)", "SW": "Warehouse advices (945)",
+        "RA": "Remittance advices (820)", "HP": "Claim payments (835)",
+        "HC": "Health care claims (837)", "PS": "Planning schedules (830)",
+    }},
+    "REF": {1: {
+        "DP": "Department number", "IA": "Internal vendor number",
+        "BM": "Bill of lading number", "PO": "Purchase order number",
+        "VN": "Vendor order number", "CO": "Customer order number",
+        "PK": "Packing list number", "SI": "Shipper's ID number",
+        "MR": "Merchandise type code", "ZZ": "Mutually defined",
+    }},
+    "DTM": {1: {
+        "002": "Requested delivery", "010": "Requested ship",
+        "011": "Shipped", "017": "Estimated delivery",
+        "035": "Delivered", "036": "Expiration",
+        "067": "Current schedule delivery", "137": "Document date",
+    }},
+    "N1": {1: {
+        "ST": "Ship to", "BT": "Bill to", "SF": "Ship from",
+        "VN": "Vendor", "BY": "Buying party", "SE": "Selling party",
+        "RI": "Remit to", "DE": "Depositor", "CA": "Carrier",
+        "WH": "Warehouse", "MF": "Manufacturer",
+    }},
+    "BEG": {
+        1: {"00": "Original", "01": "Cancellation", "05": "Replace"},
+        2: {"NE": "New order", "SA": "Stand-alone order",
+            "RL": "Release against blanket", "DS": "Drop ship"},
+    },
+    "FOB": {1: {"PP": "Prepaid", "CC": "Collect",
+                "DF": "Defined by buyer and seller"}},
+    "SAC": {1: {"A": "Allowance", "C": "Charge", "N": "No allowance or charge"}},
+    "HL": {3: {"S": "Shipment", "O": "Order", "P": "Pack", "I": "Item",
+               "T": "Shipping tare"}},
+    "TD5": {4: {"M": "Motor", "R": "Rail", "A": "Air", "S": "Ocean",
+                "U": "Private parcel"}},
+    "PO1": {6: {"UP": "UPC", "VN": "Vendor part number", "BP": "Buyer part number",
+                "EN": "EAN/GTIN", "IN": "Buyer's item number", "SK": "SKU"}},
+    "IT1": {6: {"UP": "UPC", "VN": "Vendor part number", "BP": "Buyer part number",
+                "EN": "EAN/GTIN", "IN": "Buyer's item number", "SK": "SKU"}},
+    "LIN": {2: {"UP": "UPC", "VN": "Vendor part number", "BP": "Buyer part number",
+                "EN": "EAN/GTIN", "LT": "Lot number", "SN": "Serial number"}},
+    "MAN": {1: {"GM": "SSCC-18", "CA": "Shipper-assigned case number",
+                "L": "Line item only"}},
+    "TA1": {4: {"A": "Accepted", "E": "Accepted with errors", "R": "Rejected"}},
+    "AK9": {1: {"A": "Accepted", "E": "Accepted with errors",
+                "P": "Partially accepted", "R": "Rejected"}},
+    "AK5": {1: {"A": "Accepted", "E": "Accepted with errors", "R": "Rejected"}},
+}
+
+TRADACOMS_QUALIFIERS = {
+    "TYP": {1: {
+        "0430": "New orders", "0410": "Order amendments",
+        "0700": "Invoices", "0710": "Credit notes",
+        "0120": "Delivery notifications", "0620": "Statements",
+    }},
+}
+
+HL7_QUALIFIERS = {
+    "MSH": {9: {
+        "ADT": "Admit/discharge/transfer", "ORM": "Order message",
+        "ORU": "Observation result", "ACK": "Acknowledgment",
+        "SIU": "Scheduling information", "MDM": "Medical document management",
+        "DFT": "Detailed financial transaction", "VXU": "Vaccination update",
+        "OML": "Laboratory order", "RDE": "Pharmacy encoded order",
+    }},
+    "PV1": {2: {
+        "I": "Inpatient", "O": "Outpatient", "E": "Emergency",
+        "P": "Preadmit", "R": "Recurring patient", "B": "Obstetrics",
+    }},
+    "OBX": {2: {
+        "NM": "Numeric", "ST": "String", "TX": "Text",
+        "CE": "Coded entry", "CWE": "Coded with exceptions",
+        "SN": "Structured numeric", "DT": "Date", "TS": "Timestamp",
+    }},
+    "MSA": {1: {
+        "AA": "Application accept", "AE": "Application error",
+        "AR": "Application reject", "CA": "Commit accept",
+        "CE": "Commit error", "CR": "Commit reject",
+    }},
+    "PID": {8: {"M": "Male", "F": "Female", "O": "Other", "U": "Unknown"}},
+    "DG1": {6: {"A": "Admitting", "W": "Working", "F": "Final"}},
+    "AL1": {2: {"DA": "Drug allergy", "FA": "Food allergy",
+                "MA": "Miscellaneous allergy", "EA": "Environmental allergy"}},
+    "ORC": {1: {"NW": "New order", "CA": "Cancel order",
+                "RE": "Observations to follow", "OK": "Order accepted",
+                "XO": "Change order"}},
+}
+
+QUALIFIERS = {
+    "edifact": EDIFACT_QUALIFIERS,
+    "x12": X12_QUALIFIERS,
+    "tradacoms": TRADACOMS_QUALIFIERS,
+    "hl7": HL7_QUALIFIERS,
+}
+
+
+# ---------------------------------------------------------------------------
 # Accessors
 # ---------------------------------------------------------------------------
 
@@ -1008,3 +1213,14 @@ def element_names(dialect_key, tag):
     """Return the positional element name list for ``tag`` (may be empty)."""
     family = dialect_family(dialect_key)
     return ELEMENT_NAMES.get(family, {}).get(tag, [])
+
+
+def qualifier_label(dialect_key, tag, element_number, code):
+    """Decode a qualifier ``code`` found in ``tag``'s element ``element_number``.
+
+    ``element_number`` is 1-based (HL7 uses the standard's field numbering).
+    Returns an empty string when the code is not in the reference tables.
+    """
+    family = dialect_family(dialect_key)
+    table = QUALIFIERS.get(family, {}).get(tag, {})
+    return table.get(element_number, {}).get(code, "")

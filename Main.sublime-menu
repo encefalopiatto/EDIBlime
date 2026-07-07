@@ -26,22 +26,36 @@
                         "command": "edi_validate"
                     },
                     {
+                        "caption": "Repair Envelope (fix counts and references)",
+                        "command": "edi_repair"
+                    },
+                    {
+                        "caption": "Outline (browse segments)",
+                        "command": "edi_outline"
+                    },
+                    {
                         "caption": "-"
                     },
                     {
                         "caption": "Convert to JSON",
                         "command": "edi_convert",
-                        "args": {"format": "json"}
+                        "args": {
+                            "format": "json"
+                        }
                     },
                     {
                         "caption": "Convert to JSONC (with descriptions)",
                         "command": "edi_convert",
-                        "args": {"format": "jsonc"}
+                        "args": {
+                            "format": "jsonc"
+                        }
                     },
                     {
                         "caption": "Convert to XML",
                         "command": "edi_convert",
-                        "args": {"format": "xml"}
+                        "args": {
+                            "format": "xml"
+                        }
                     },
                     {
                         "caption": "-"

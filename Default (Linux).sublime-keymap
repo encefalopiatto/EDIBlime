@@ -1,12 +1,18 @@
 [
-    // Beautify: Ctrl+Alt+B
-    { "keys": ["ctrl+alt+b"], "command": "edi_beautify" },
-    // Minify: Ctrl+Alt+M
-    { "keys": ["ctrl+alt+m"], "command": "edi_minify" },
-    // Toggle inline hints: Ctrl+Alt+H
-    { "keys": ["ctrl+alt+h"], "command": "edi_toggle_hints" },
-    // Explain segment under caret: Ctrl+Alt+E
-    { "keys": ["ctrl+alt+e"], "command": "edi_explain_segment" },
-    // Validate structure: Ctrl+Alt+V
-    { "keys": ["ctrl+alt+v"], "command": "edi_validate" }
+    // All bindings are scoped to EDI syntaxes so they never fire (or shadow
+    // other packages / AltGr characters) in ordinary files.
+    { "keys": ["ctrl+alt+b"], "command": "edi_beautify",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["ctrl+alt+m"], "command": "edi_minify",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["ctrl+alt+h"], "command": "edi_toggle_hints",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["ctrl+alt+e"], "command": "edi_explain_segment",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["ctrl+alt+v"], "command": "edi_validate",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["ctrl+alt+r"], "command": "edi_repair",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["ctrl+alt+o"], "command": "edi_outline",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] }
 ]

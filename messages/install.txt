@@ -20,4 +20,4 @@ Default key bindings
 
 Sample messages are in the package's samples/ folder.
 
-Settings: Preferences -> Package Settings -> EDI -> Settings
+Settings: Preferences -> Package Settings -> EDIBlime -> Settings

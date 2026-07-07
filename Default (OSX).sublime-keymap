@@ -1,12 +1,19 @@
 [
-    // Beautify: Cmd+Alt+B
-    { "keys": ["super+alt+b"], "command": "edi_beautify" },
-    // Minify: Cmd+Alt+M
-    { "keys": ["super+alt+m"], "command": "edi_minify" },
-    // Toggle inline hints: Cmd+Alt+H
-    { "keys": ["super+alt+h"], "command": "edi_toggle_hints" },
-    // Explain segment under caret: Cmd+Alt+E
-    { "keys": ["super+alt+e"], "command": "edi_explain_segment" },
-    // Validate structure: Cmd+Alt+V
-    { "keys": ["super+alt+v"], "command": "edi_validate" }
+    // All bindings are scoped to EDI syntaxes so they never fire (or shadow
+    // other packages) in ordinary files. Validate deliberately avoids
+    // super+alt+v, which is Sublime's Paste from History.
+    { "keys": ["super+alt+b"], "command": "edi_beautify",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["super+alt+m"], "command": "edi_minify",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["super+alt+h"], "command": "edi_toggle_hints",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["super+alt+e"], "command": "edi_explain_segment",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["ctrl+super+v"], "command": "edi_validate",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["ctrl+super+r"], "command": "edi_repair",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] },
+    { "keys": ["ctrl+super+o"], "command": "edi_outline",
+      "context": [{"key": "selector", "operator": "equal", "operand": "source.edifact, source.x12, source.tradacoms, source.hl7"}] }
 ]
