@@ -4,24 +4,31 @@
 name: X12
 file_extensions:
   - x12
-  - edi
-  - 850
-  - 810
-  - 856
+  - "850"
+  - "810"
+  - "856"
+  - "997"
+first_line_match: '^ISA\*'
 scope: source.x12
 contexts:
   main:
-    # Interchange / group / transaction envelope segments.
-    - match: "^(ISA|IEA|GS|GE|ST|SE|TA1)\\b"
+    # Interchange / group / transaction envelope segments at the start of a
+    # line or of a segment (after the ~ terminator in minified messages).
+    - match: "(?:^|(?<=~))(ISA|IEA|GS|GE|ST|SE|TA1)(?=\\*|~)"
       scope: keyword.control.envelope.x12
-    # Ordinary segment tag (2-3 alphanumerics) at the start of a segment line.
-    - match: "^([A-Z][A-Z0-9]{1,2})\\b"
+    # Ordinary segment tag (2-3 alphanumerics) at the start of a segment.
+    - match: "(?:^|(?<=~))([A-Z][A-Z0-9]{1,2})(?=\\*|~)"
       scope: entity.name.tag.segment.x12
     - match: "\\*"
       scope: punctuation.separator.element.x12
+    - match: ">"
+      scope: punctuation.separator.component.x12
     - match: ":"
       scope: punctuation.separator.component.x12
     - match: "\\^"
       scope: punctuation.separator.repetition.x12
     - match: "~"
       scope: punctuation.terminator.segment.x12
+    # Numeric values (amounts, control numbers, dates).
+    - match: "(?<=[*:>])\\d+(?:\\.\\d+)?(?=[*:>~^]|$)"
+      scope: constant.numeric.x12

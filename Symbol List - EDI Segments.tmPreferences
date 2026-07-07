@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>name</key>
+	<string>Symbol List - EDI Segments</string>
+	<key>scope</key>
+	<string>source.edifact entity.name.tag.segment.edifact, source.edifact keyword.control.service.edifact, source.x12 entity.name.tag.segment.x12, source.x12 keyword.control.envelope.x12, source.tradacoms entity.name.tag.segment.tradacoms, source.tradacoms keyword.control.envelope.tradacoms, source.hl7 entity.name.tag.segment.hl7, source.hl7 keyword.control.header.hl7</string>
+	<key>settings</key>
+	<dict>
+		<key>showInSymbolList</key>
+		<integer>1</integer>
+	</dict>
+</dict>
+</plist>

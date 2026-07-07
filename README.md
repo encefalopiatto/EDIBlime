@@ -37,14 +37,32 @@ valid, byte-for-byte EDI document.
   single-line wire format, stripping the whitespace editors and humans add.
 - **Inline hints** — toggle human-readable segment descriptions shown as
   end-of-line annotations. Completely non-destructive.
+- **Segment explanations** — hover any segment (or press `Ctrl+Alt+E`) for a
+  popup that explains what the segment means and does, plus an
+  **element-by-element breakdown** with the value and the element's name
+  (e.g. `1. "UNOC:3" — Syntax identifier : version`). Works for EDIFACT, X12,
+  TRADACOMS and HL7. The segment under the caret is also named in the status
+  bar as you move around.
+- **Validation** — check the envelope integrity every dialect builds in:
+  segment counts (`UNT`, `SE`, `MTR`), message/transaction counts (`UNZ`,
+  `GE`, `IEA`, `END`) and control-reference echoes (`UNB`↔`UNZ`, `ISA`↔`IEA`,
+  `UNH`↔`UNT`, `ST`↔`SE`). Issues open in a quick panel that jumps to the
+  offending segment.
+- **Convert to JSON / JSONC / XML** — turn a message into a structured
+  document in a new tab. The JSONC output is self-documenting: every segment
+  is preceded by a comment explaining what it does, and every element carries
+  its positional name. Release characters and HL7 escapes are decoded; values
+  stay strings so leading zeros and implied decimals survive.
 - **Automatic dialect detection** — the delimiters are read from the message
   itself (EDIFACT `UNA`, X12 `ISA`, HL7 `MSH`) with sensible fallbacks, so
   non-standard delimiter sets are handled correctly.
-- **Syntax highlighting** — dedicated syntax definitions highlight segment tags,
-  service/envelope segments, element/component separators, release characters
-  and terminators.
+- **Syntax highlighting** — dedicated syntax definitions highlight segment tags
+  (also mid-line in minified messages), service/envelope segments, separators,
+  release characters, terminators and numeric values; `first_line_match` lets
+  Sublime pick the right syntax on its own. Goto Symbol (`Ctrl+R`) navigates
+  by segment.
 - **Release/escape aware** — an escaped terminator (EDIFACT `?'`, HL7 `\`)
-  never falsely ends a segment.
+  never falsely ends a segment, and escaped values are decoded on conversion.
 
 ## Supported formats
 
@@ -75,8 +93,34 @@ type "EDI"), the **Tools → EDI** menu, and the editor context menu.
 | `edi_beautify` | EDI: Beautify (one segment per line) | `Ctrl+Alt+B` / `Cmd+Alt+B` |
 | `edi_minify` | EDI: Minify (collapse to single line) | `Ctrl+Alt+M` / `Cmd+Alt+M` |
 | `edi_toggle_hints` | EDI: Toggle Inline Hints | `Ctrl+Alt+H` / `Cmd+Alt+H` |
+| `edi_explain_segment` | EDI: Explain Segment Under Caret | `Ctrl+Alt+E` / `Cmd+Alt+E` |
+| `edi_validate` | EDI: Validate Structure | `Ctrl+Alt+V` / `Cmd+Alt+V` |
+| `edi_convert` (json) | EDI: Convert to JSON | — |
+| `edi_convert` (jsonc) | EDI: Convert to JSONC (with descriptions) | — |
+| `edi_convert` (xml) | EDI: Convert to XML | — |
 | `edi_set_dialect` | EDI: Set Dialect… | — |
 | `edi_detect_syntax` | EDI: Detect Syntax | — |
+
+### Conversion output
+
+`EDI: Convert to JSONC` produces a self-documenting document:
+
+```jsonc
+// UNB — Interchange Header
+// Opens the interchange. Carries the syntax identifier and version (e.g. UNOC:3), ...
+{
+  "tag": "UNB",
+  "name": "Interchange Header",
+  "elements": [
+    ["UNOC", "3"],    // 1. Syntax identifier : version (e.g. UNOC:3)
+    ["SENDER", "14"], // 2. Interchange sender (id : qualifier)
+    "1"               // 5. Interchange control reference (repeated in UNZ)
+  ]
+}
+```
+
+JSON is the same structure without comments; XML nests
+`<segment>` → `<element>` → `<component>` with `name` attributes.
 
 ## Settings
 
@@ -86,6 +130,12 @@ type "EDI"), the **Tools → EDI** menu, and the editor context menu.
 {
     // Turn on inline hints automatically when an EDI file is opened.
     "auto_hints": false,
+
+    // Add a short description to each inline hint (hover for the full one).
+    "hints_show_descriptions": false,
+
+    // Explain segments in a popup on mouse hover.
+    "hover_help": true,
 
     // Colour for the inline hint annotations. Empty = inherit the colour
     // scheme's "comment" colour. Accepts any CSS colour.
@@ -118,10 +168,15 @@ Requires **Sublime Text 4** (build 4050+) for the inline annotation API.
 
 The package is split into a Sublime-independent engine and a thin editor layer:
 
-- **`edi_data.py`** — delimiter dialects and segment-name reference tables.
-- **`edi_core.py`** — detection, release-aware segment splitting, beautify,
-  minify and describe. No Sublime dependency, so it is unit tested directly.
-- **`edi.py`** — Sublime commands, menus, annotations and auto-detection.
+- **`edi_data.py`** — delimiter dialects, segment names, detailed segment
+  descriptions and positional element names.
+- **`edi_core.py`** — detection, release-aware segment splitting, element
+  parsing, beautify, minify and describe. No Sublime dependency, so it is
+  unit tested directly.
+- **`edi_convert.py`** — JSON / JSONC / XML conversion.
+- **`edi_validate.py`** — envelope integrity validation.
+- **`edi.py`** — Sublime commands, menus, annotations, hover popups, status
+  bar and auto-detection.
 
 ## Try it
 

@@ -18,6 +18,32 @@
                         "command": "edi_toggle_hints"
                     },
                     {
+                        "caption": "Explain Segment Under Caret",
+                        "command": "edi_explain_segment"
+                    },
+                    {
+                        "caption": "Validate Structure",
+                        "command": "edi_validate"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "caption": "Convert to JSON",
+                        "command": "edi_convert",
+                        "args": {"format": "json"}
+                    },
+                    {
+                        "caption": "Convert to JSONC (with descriptions)",
+                        "command": "edi_convert",
+                        "args": {"format": "jsonc"}
+                    },
+                    {
+                        "caption": "Convert to XML",
+                        "command": "edi_convert",
+                        "args": {"format": "xml"}
+                    },
+                    {
                         "caption": "-"
                     },
                     {

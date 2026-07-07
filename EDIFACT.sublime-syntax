@@ -9,17 +9,22 @@ file_extensions:
   - eancom
   - odette
   - edig
+first_line_match: '^(?:UNA.{6}|UNB\+)'
 scope: source.edifact
 contexts:
   main:
-    # Service string advice (UNA) declares the delimiters for the interchange.
-    - match: "^(UNA).{6}"
+    # Service string advice (UNA): the six characters after the tag are
+    # literal delimiter definitions.
+    - match: "(UNA)(.{6})"
+      captures:
+        1: keyword.control.service.edifact
+        2: constant.other.delimiters.edifact
+    # Service / envelope segments at the start of a line or of a segment.
+    - match: "(?:^|(?<='))(UN[BEGHOPSTZ])(?=\\+|')"
       scope: keyword.control.service.edifact
-    # Service / envelope segments (UNB, UNH, UNT, UNZ, UNG, UNE, UNS, ...).
-    - match: "^(UN[BEGHOPSTZ])\\b"
-      scope: keyword.control.service.edifact
-    # Ordinary segment tag (three characters) at the start of a segment line.
-    - match: "^([A-Z][A-Z0-9]{2})\\b"
+    # Ordinary segment tag (three characters) at the start of a segment,
+    # whether the message is beautified (line start) or minified (after ').
+    - match: "(?:^|(?<='))([A-Z][A-Z0-9]{2})(?=\\+|')"
       scope: entity.name.tag.segment.edifact
     # Release character escaping the following character.
     - match: "\\?."
@@ -28,5 +33,10 @@ contexts:
       scope: punctuation.separator.element.edifact
     - match: ":"
       scope: punctuation.separator.component.edifact
+    - match: "\\*"
+      scope: punctuation.separator.repetition.edifact
     - match: "'"
       scope: punctuation.terminator.segment.edifact
+    # Dates / times / numeric values.
+    - match: "(?<=[+:])\\d+(?:\\.\\d+)?(?=[+:'*?]|$)"
+      scope: constant.numeric.edifact

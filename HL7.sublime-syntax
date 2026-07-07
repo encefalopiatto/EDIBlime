@@ -4,17 +4,21 @@
 name: HL7
 file_extensions:
   - hl7
+first_line_match: '^MSH\|'
 scope: source.hl7
 contexts:
   main:
-    # The MSH header also carries the encoding characters right after the tag.
-    - match: "^(MSH)\\b"
-      scope: keyword.control.header.hl7
+    # The MSH header carries the encoding characters right after the tag.
+    - match: "^(MSH)(\\|)([^|]*)"
+      captures:
+        1: keyword.control.header.hl7
+        2: punctuation.separator.field.hl7
+        3: constant.other.delimiters.hl7
     # Segment tag (three characters) at the start of a segment line.
-    - match: "^([A-Z][A-Z0-9]{2})\\b"
+    - match: "^([A-Z][A-Z0-9]{2})(?=\\|)"
       scope: entity.name.tag.segment.hl7
-    # Escape sequence: backslash-delimited, e.g. \\F\\, \\.br\\.
-    - match: "\\\\[^\\\\]*\\\\"
+    # Escape sequence: backslash-delimited, e.g. \F\, \.br\.
+    - match: "\\\\[^\\\\|^~&]*\\\\"
       scope: constant.character.escape.hl7
     - match: "\\|"
       scope: punctuation.separator.field.hl7
@@ -24,3 +28,6 @@ contexts:
       scope: punctuation.separator.repetition.hl7
     - match: "&"
       scope: punctuation.separator.subcomponent.hl7
+    # Numeric values (results, timestamps).
+    - match: "(?<=[|^~&])\\d+(?:\\.\\d+)?(?=[|^~&]|$)"
+      scope: constant.numeric.hl7

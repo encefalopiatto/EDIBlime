@@ -4,5 +4,9 @@
     // Minify: Cmd+Alt+M
     { "keys": ["super+alt+m"], "command": "edi_minify" },
     // Toggle inline hints: Cmd+Alt+H
-    { "keys": ["super+alt+h"], "command": "edi_toggle_hints" }
+    { "keys": ["super+alt+h"], "command": "edi_toggle_hints" },
+    // Explain segment under caret: Cmd+Alt+E
+    { "keys": ["super+alt+e"], "command": "edi_explain_segment" },
+    // Validate structure: Cmd+Alt+V
+    { "keys": ["super+alt+v"], "command": "edi_validate" }
 ]

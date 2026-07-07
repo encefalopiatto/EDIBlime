@@ -171,10 +171,152 @@ class Segment(object):
     def __repr__(self):
         return "Segment(%r)" % (self.content,)
 
+    def elements(self):
+        """Parse this segment's data elements.
+
+        Returns a list of elements, where each element is a list of component
+        strings (a simple element yields a one-component list). The segment
+        tag itself is not included. Release characters are resolved, i.e. the
+        returned values are the *decoded* data.
+
+        Dialect specifics handled here:
+
+        * EDIFACT ``UNA`` is fixed-format -- the six service characters are
+          returned as a single element and never split.
+        * TRADACOMS tags are separated from the data by ``=``.
+        * HL7 ``MSH`` follows the standard's numbering: MSH-1 is the field
+          separator itself and MSH-2 the four encoding characters (returned
+          verbatim, never component-split or unescaped).
+        """
+        d = self.dialect
+        content = self.content
+
+        if d.family == "edifact" and self.tag == "UNA":
+            return [[content[3:]]]
+
+        if d.family == "hl7":
+            if len(content) <= 4:
+                return []
+            body = content[4:]
+            fields = body.split(d.element_separator)
+            if self.tag == "MSH":
+                # MSH-1 = field separator, MSH-2 = encoding characters (raw).
+                encoding = fields[0] if fields else ""
+                rest = fields[1:]
+                elements = [[d.element_separator], [encoding]]
+                elements.extend(
+                    [_hl7_unescape(c, d) for c in f.split(d.component_separator)]
+                    for f in rest)
+                return elements
+            return [
+                [_hl7_unescape(c, d) for c in f.split(d.component_separator)]
+                for f in fields
+            ]
+
+        # Delimiter-based dialects with an optional release character.
+        body = content[len(self.tag):]
+        if body.startswith(d.tag_separator or d.element_separator):
+            body = body[1:]
+        if not body:
+            return []
+        raw_elements = _split_released(body, d.element_separator, d.release_character)
+        return [
+            [_unescape(c, d.release_character)
+             for c in _split_released(e, d.component_separator, d.release_character)]
+            for e in raw_elements
+        ]
+
 
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+def _split_released(text, separator, release):
+    """Split ``text`` on ``separator``, honouring the release character.
+
+    A separator preceded by the release character is data, not structure. The
+    release characters are kept in the returned parts (``_unescape`` removes
+    them afterwards).
+    """
+    if not release or release not in text:
+        return text.split(separator)
+    parts = []
+    buf = []
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch == release and i + 1 < n:
+            buf.append(ch)
+            buf.append(text[i + 1])
+            i += 2
+            continue
+        if ch == separator:
+            parts.append("".join(buf))
+            buf = []
+            i += 1
+            continue
+        buf.append(ch)
+        i += 1
+    parts.append("".join(buf))
+    return parts
+
+
+def _unescape(value, release):
+    """Resolve release characters: ``?+`` becomes ``+``, ``??`` becomes ``?``."""
+    if not release or release not in value:
+        return value
+    out = []
+    i = 0
+    n = len(value)
+    while i < n:
+        ch = value[i]
+        if ch == release and i + 1 < n:
+            out.append(value[i + 1])
+            i += 2
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+# The five standard HL7 escape sequences (\F\ etc.) map to the *default*
+# delimiter roles; the actual characters come from the message's MSH segment.
+def _hl7_unescape(value, dialect):
+    """Decode the standard HL7 escape sequences into their literal characters.
+
+    ``\\F\\`` = field separator, ``\\S\\`` = component, ``\\R\\`` = repetition,
+    ``\\T\\`` = subcomponent, ``\\E\\`` = escape character itself. Unknown
+    sequences (``\\X..\\``, ``\\.br\\``, ...) are preserved verbatim.
+    """
+    esc = dialect.release_character or "\\"
+    if esc not in value:
+        return value
+    mapping = {
+        "F": dialect.element_separator,
+        "S": dialect.component_separator,
+        "R": dialect.repetition_separator or "~",
+        "T": "&",
+        "E": esc,
+    }
+    out = []
+    i = 0
+    n = len(value)
+    while i < n:
+        ch = value[i]
+        if ch == esc:
+            end = value.find(esc, i + 1)
+            if end != -1:
+                seq = value[i + 1:end]
+                if seq in mapping:
+                    out.append(mapping[seq])
+                    i = end + 1
+                    continue
+            # Unknown / unterminated sequence: keep verbatim.
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
 
 def _dominant(text, candidates):
     """Return the candidate character that occurs most often in ``text``."""

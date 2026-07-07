@@ -3,6 +3,16 @@
     // When false, use "EDI: Toggle Inline Hints" (or the key binding) on demand.
     "auto_hints": false,
 
+    // Include a short description of what the segment does in the inline hint
+    // annotation (in addition to the segment name). Hover a segment (or run
+    // "EDI: Explain Segment Under Caret") for the full explanation with the
+    // element-by-element breakdown, regardless of this setting.
+    "hints_show_descriptions": false,
+
+    // Show a popup explaining the segment (meaning + element breakdown) when
+    // hovering over EDI text.
+    "hover_help": true,
+
     // Colour used for the inline hint annotations. Leave empty ("") to inherit
     // a subdued colour from the active colour scheme (the "comment" style).
     // Accepts any CSS colour, e.g. "#7d8799" or "rgba(128,128,128,0.8)".

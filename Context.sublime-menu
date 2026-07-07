@@ -10,5 +10,28 @@
     {
         "caption": "EDI: Toggle Inline Hints",
         "command": "edi_toggle_hints"
+    },
+    {
+        "caption": "EDI: Explain Segment",
+        "command": "edi_explain_segment"
+    },
+    {
+        "caption": "EDI: Validate Structure",
+        "command": "edi_validate"
+    },
+    {
+        "caption": "EDI: Convert to JSON",
+        "command": "edi_convert",
+        "args": {"format": "json"}
+    },
+    {
+        "caption": "EDI: Convert to JSONC",
+        "command": "edi_convert",
+        "args": {"format": "jsonc"}
+    },
+    {
+        "caption": "EDI: Convert to XML",
+        "command": "edi_convert",
+        "args": {"format": "xml"}
     }
 ]
