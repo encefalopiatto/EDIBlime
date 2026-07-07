@@ -1,0 +1,7 @@
+# Keep development-only files out of the release archive that Package
+# Control installs (GitHub zipballs honour export-ignore). Runtime files —
+# .python-version, messages/, samples/ — must NOT be listed here.
+/tests export-ignore
+/.gitignore export-ignore
+/.gitattributes export-ignore
+/PACKAGE_CONTROL_SUBMISSION.md export-ignore
