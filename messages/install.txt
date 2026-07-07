@@ -1,0 +1,23 @@
+Thanks for installing SublimeEDI!
+
+Beautify, minify and annotate EDI documents — EDIFACT, X12, TRADACOMS, HL7 and
+the EDIFACT subsets (EANCOM, ODETTE, EDIG@S, IATA/PADIS).
+
+Quick start
+-----------
+1. Open an EDI file (or paste raw EDI into a new buffer).
+2. Command Palette (Ctrl/Cmd+Shift+P) -> "EDI: Beautify" to put each segment
+   on its own line.
+3. "EDI: Toggle Inline Hints" to see a description next to every segment.
+   Hints are annotations — they never modify your file.
+4. "EDI: Minify" collapses the message back to a single compliant line.
+
+Default key bindings
+---------------------
+  Beautify        Ctrl+Alt+B   (Cmd+Alt+B on macOS)
+  Minify          Ctrl+Alt+M   (Cmd+Alt+M on macOS)
+  Toggle hints    Ctrl+Alt+H   (Cmd+Alt+H on macOS)
+
+Sample messages are in the package's samples/ folder.
+
+Settings: Preferences -> Package Settings -> EDI -> Settings

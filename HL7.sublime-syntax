@@ -1,0 +1,26 @@
+%YAML 1.2
+---
+# HL7 v2.x (pipe-and-hat encoding)
+name: HL7
+file_extensions:
+  - hl7
+scope: source.hl7
+contexts:
+  main:
+    # The MSH header also carries the encoding characters right after the tag.
+    - match: "^(MSH)\\b"
+      scope: keyword.control.header.hl7
+    # Segment tag (three characters) at the start of a segment line.
+    - match: "^([A-Z][A-Z0-9]{2})\\b"
+      scope: entity.name.tag.segment.hl7
+    # Escape sequence: backslash-delimited, e.g. \\F\\, \\.br\\.
+    - match: "\\\\[^\\\\]*\\\\"
+      scope: constant.character.escape.hl7
+    - match: "\\|"
+      scope: punctuation.separator.field.hl7
+    - match: "\\^"
+      scope: punctuation.separator.component.hl7
+    - match: "~"
+      scope: punctuation.separator.repetition.hl7
+    - match: "&"
+      scope: punctuation.separator.subcomponent.hl7

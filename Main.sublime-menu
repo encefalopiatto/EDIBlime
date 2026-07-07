@@ -1,0 +1,66 @@
+[
+    {
+        "id": "tools",
+        "children": [
+            {
+                "caption": "EDI",
+                "children": [
+                    {
+                        "caption": "Beautify (one segment per line)",
+                        "command": "edi_beautify"
+                    },
+                    {
+                        "caption": "Minify (collapse to single line)",
+                        "command": "edi_minify"
+                    },
+                    {
+                        "caption": "Toggle Inline Hints",
+                        "command": "edi_toggle_hints"
+                    },
+                    {
+                        "caption": "-"
+                    },
+                    {
+                        "caption": "Set Dialect…",
+                        "command": "edi_set_dialect"
+                    },
+                    {
+                        "caption": "Detect Syntax",
+                        "command": "edi_detect_syntax"
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "id": "preferences",
+        "children": [
+            {
+                "caption": "Package Settings",
+                "children": [
+                    {
+                        "caption": "EDI",
+                        "children": [
+                            {
+                                "caption": "Settings",
+                                "command": "edit_settings",
+                                "args": {
+                                    "base_file": "${packages}/SublimeEDI/EDI.sublime-settings",
+                                    "default": "// EDI settings — user overrides\n{\n\t$0\n}\n"
+                                }
+                            },
+                            {
+                                "caption": "Key Bindings",
+                                "command": "edit_settings",
+                                "args": {
+                                    "base_file": "${packages}/SublimeEDI/Default (${platform}).sublime-keymap",
+                                    "default": "// EDI key bindings — user overrides\n[\n\t$0\n]\n"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

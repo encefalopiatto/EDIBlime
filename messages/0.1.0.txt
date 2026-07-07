@@ -1,0 +1,14 @@
+SublimeEDI 0.1.0
+================
+
+Initial release.
+
+- Beautify: one segment per line, keeping valid segment terminators.
+- Minify: collapse back to the canonical single-line wire format.
+- Inline hints: non-destructive segment-description annotations.
+- Automatic dialect detection with delimiter extraction from UNA / ISA / MSH.
+- Syntax highlighting for EDIFACT, X12, TRADACOMS and HL7.
+- Supported families: UN/EDIFACT (+ EANCOM, ODETTE, EDIG@S, IATA/PADIS),
+  ANSI ASC X12, TRADACOMS, HL7 v2.x.
+- Release/escape-character aware segment splitting.
+- Unit-tested, Sublime-independent parsing engine.

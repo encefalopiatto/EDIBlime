@@ -1,0 +1,14 @@
+[
+    {
+        "caption": "EDI: Beautify",
+        "command": "edi_beautify"
+    },
+    {
+        "caption": "EDI: Minify",
+        "command": "edi_minify"
+    },
+    {
+        "caption": "EDI: Toggle Inline Hints",
+        "command": "edi_toggle_hints"
+    }
+]

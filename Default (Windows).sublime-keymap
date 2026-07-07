@@ -1,0 +1,8 @@
+[
+    // Beautify: Ctrl+Alt+B
+    { "keys": ["ctrl+alt+b"], "command": "edi_beautify" },
+    // Minify: Ctrl+Alt+M
+    { "keys": ["ctrl+alt+m"], "command": "edi_minify" },
+    // Toggle inline hints: Ctrl+Alt+H
+    { "keys": ["ctrl+alt+h"], "command": "edi_toggle_hints" }
+]

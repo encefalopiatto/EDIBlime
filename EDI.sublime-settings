@@ -1,0 +1,10 @@
+{
+    // Automatically turn on inline hint annotations when an EDI file is opened.
+    // When false, use "EDI: Toggle Inline Hints" (or the key binding) on demand.
+    "auto_hints": false,
+
+    // Colour used for the inline hint annotations. Leave empty ("") to inherit
+    // a subdued colour from the active colour scheme (the "comment" style).
+    // Accepts any CSS colour, e.g. "#7d8799" or "rgba(128,128,128,0.8)".
+    "hint_color": ""
+}

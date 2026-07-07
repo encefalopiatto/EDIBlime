@@ -1,0 +1,27 @@
+%YAML 1.2
+---
+# ANSI ASC X12
+name: X12
+file_extensions:
+  - x12
+  - edi
+  - 850
+  - 810
+  - 856
+scope: source.x12
+contexts:
+  main:
+    # Interchange / group / transaction envelope segments.
+    - match: "^(ISA|IEA|GS|GE|ST|SE|TA1)\\b"
+      scope: keyword.control.envelope.x12
+    # Ordinary segment tag (2-3 alphanumerics) at the start of a segment line.
+    - match: "^([A-Z][A-Z0-9]{1,2})\\b"
+      scope: entity.name.tag.segment.x12
+    - match: "\\*"
+      scope: punctuation.separator.element.x12
+    - match: ":"
+      scope: punctuation.separator.component.x12
+    - match: "\\^"
+      scope: punctuation.separator.repetition.x12
+    - match: "~"
+      scope: punctuation.terminator.segment.x12

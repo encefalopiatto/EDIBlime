@@ -1,0 +1,26 @@
+%YAML 1.2
+---
+# TRADACOMS (UK retail EDI)
+name: TRADACOMS
+file_extensions:
+  - tradacoms
+  - trd
+scope: source.tradacoms
+contexts:
+  main:
+    # Transmission envelope segments.
+    - match: "^(STX|END|MHD|MTR)\\b"
+      scope: keyword.control.envelope.tradacoms
+    # Segment tag followed by the ``=`` tag separator.
+    - match: "^([A-Z][A-Z0-9]{2})(=)"
+      captures:
+        1: entity.name.tag.segment.tradacoms
+        2: punctuation.separator.tag.tradacoms
+    - match: "\\?."
+      scope: constant.character.escape.tradacoms
+    - match: "\\+"
+      scope: punctuation.separator.element.tradacoms
+    - match: ":"
+      scope: punctuation.separator.component.tradacoms
+    - match: "'"
+      scope: punctuation.terminator.segment.tradacoms
