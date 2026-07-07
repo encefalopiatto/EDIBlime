@@ -156,7 +156,7 @@ Clone into your Sublime Text `Packages` directory (the folder revealed by
 **Preferences → Browse Packages…**):
 
 ```sh
-git clone https://github.com/encefalopiatto/SublimeEDI.git "EDIBlime"
+git clone https://github.com/encefalopiatto/EDIBlime.git
 ```
 
 > Name the folder `EDIBlime`. (Resource paths are resolved from the installed
