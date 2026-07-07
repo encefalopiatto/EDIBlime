@@ -165,6 +165,10 @@ JSON is the same structure without comments; XML nests
     // Explain segments in a popup on mouse hover.
     "hover_help": true,
 
+    // Re-run envelope validation on every save and mark problem segments
+    // with a squiggly underline.
+    "validate_on_save": false,
+
     // Colour for the inline hint annotations. Empty = inherit the colour
     // scheme's "comment" colour. Accepts any CSS colour.
     "hint_color": ""
@@ -176,7 +180,7 @@ JSON is the same structure without comments; XML nests
 ### Package Control (recommended once published)
 
 1. Open the Command Palette and run **Package Control: Install Package**.
-2. Search for **EDI** and install.
+2. Search for **EDIBlime** and install.
 
 ### Manual
 
@@ -190,7 +194,9 @@ git clone https://github.com/encefalopiatto/EDIBlime.git
 > Name the folder `EDIBlime`. (Resource paths are resolved from the installed
 > folder name, so another name still works — but menus and docs assume `EDIBlime`.)
 
-Requires **Sublime Text 4** (build 4050+) for the inline annotation API.
+Requires **Sublime Text 4**, build 4095 or later — any stable ST4 release
+(4107+) qualifies. The floor is set by the coloured quick-panel kinds (4095);
+`QuickPanelItem` (4083) and the inline annotation API (4050) are older.
 
 ## How it works
 
@@ -208,8 +214,11 @@ The package is split into a Sublime-independent engine and a thin editor layer:
 
 ## Try it
 
-Sample messages live in [`samples/`](samples). Open one and run
-**EDI: Beautify**, then **EDI: Toggle Inline Hints**.
+Sample messages live in [`samples/`](samples). With a git clone, just open
+one; with a Package Control install the package is zipped, so run
+**View Package File** from the Command Palette, type `EDIBlime/samples` and
+pick one, then copy its contents into a new tab (package files open
+read-only). Run **EDI: Beautify**, then **EDI: Toggle Inline Hints**.
 
 ## Development
 

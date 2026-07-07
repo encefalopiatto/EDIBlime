@@ -195,6 +195,9 @@ class EdiBeautifyCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         return _looks_like_edi(self.view)
 
+    # Hide (not just grey out) the menu entries in non-EDI files.
+    is_visible = is_enabled
+
 
 class EdiMinifyCommand(sublime_plugin.TextCommand):
     """Collapse the buffer back to a single compliant EDI line."""
@@ -216,6 +219,9 @@ class EdiMinifyCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         return _looks_like_edi(self.view)
 
+    # Hide (not just grey out) the menu entries in non-EDI files.
+    is_visible = is_enabled
+
 
 class EdiToggleHintsCommand(sublime_plugin.TextCommand):
     """Toggle non-destructive inline segment descriptions."""
@@ -233,6 +239,9 @@ class EdiToggleHintsCommand(sublime_plugin.TextCommand):
 
     def is_enabled(self):
         return _looks_like_edi(self.view)
+
+    # Hide (not just grey out) the menu entries in non-EDI files.
+    is_visible = is_enabled
 
 
 # ---------------------------------------------------------------------------
@@ -261,6 +270,9 @@ class EdiExplainSegmentCommand(sublime_plugin.TextCommand):
 
     def is_enabled(self):
         return _looks_like_edi(self.view)
+
+    # Hide (not just grey out) the menu entries in non-EDI files.
+    is_visible = is_enabled
 
 
 class EdiValidateCommand(sublime_plugin.TextCommand):
@@ -323,6 +335,9 @@ class EdiValidateCommand(sublime_plugin.TextCommand):
     def is_enabled(self):
         return _looks_like_edi(self.view)
 
+    # Hide (not just grey out) the menu entries in non-EDI files.
+    is_visible = is_enabled
+
 
 class EdiRepairCommand(sublime_plugin.TextCommand):
     """Recompute envelope counts and re-sync control references."""
@@ -345,6 +360,9 @@ class EdiRepairCommand(sublime_plugin.TextCommand):
 
     def is_enabled(self):
         return _looks_like_edi(self.view)
+
+    # Hide (not just grey out) the menu entries in non-EDI files.
+    is_visible = is_enabled
 
 
 class EdiOutlineCommand(sublime_plugin.TextCommand):
@@ -395,6 +413,9 @@ class EdiOutlineCommand(sublime_plugin.TextCommand):
 
     def is_enabled(self):
         return _looks_like_edi(self.view)
+
+    # Hide (not just grey out) the menu entries in non-EDI files.
+    is_visible = is_enabled
 
 
 _KIND_FOR_SEVERITY = {
@@ -471,6 +492,9 @@ class EdiConvertCommand(sublime_plugin.TextCommand):
 
     def is_enabled(self):
         return _looks_like_edi(self.view)
+
+    # Hide (not just grey out) the menu entries in non-EDI files.
+    is_visible = is_enabled
 
 
 def _find_syntax(basename):

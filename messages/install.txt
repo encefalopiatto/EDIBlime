@@ -14,10 +14,16 @@ Quick start
 
 Default key bindings
 ---------------------
-  Beautify        Ctrl+Alt+B   (Cmd+Alt+B on macOS)
-  Minify          Ctrl+Alt+M   (Cmd+Alt+M on macOS)
-  Toggle hints    Ctrl+Alt+H   (Cmd+Alt+H on macOS)
+  Beautify         Ctrl+Alt+B   (Cmd+Alt+B on macOS)
+  Minify           Ctrl+Alt+M   (Cmd+Alt+M on macOS)
+  Toggle hints     Ctrl+Alt+H   (Cmd+Alt+H on macOS)
+  Explain segment  Ctrl+Alt+E   (Cmd+Alt+E on macOS)
+  Validate         Ctrl+Alt+V   (Ctrl+Cmd+V on macOS)
+  Repair envelope  Ctrl+Alt+R   (Ctrl+Cmd+R on macOS)
+  Outline          Ctrl+Alt+O   (Ctrl+Cmd+O on macOS)
 
-Sample messages are in the package's samples/ folder.
+Sample messages ship inside the package: Command Palette -> "View Package
+File", type "EDIBlime/samples" and pick one, then copy its contents into a
+new tab (package files open read-only) and run "EDI: Beautify".
 
 Settings: Preferences -> Package Settings -> EDIBlime -> Settings
