@@ -1,4 +1,4 @@
-SublimeEDI 0.1.0
+EDIBlime 0.1.0
 ================
 
 Initial release.

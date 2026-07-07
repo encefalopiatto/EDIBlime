@@ -1,10 +1,10 @@
-# SublimeEDI
+# EDIBlime
 
 A [Sublime Text](https://www.sublimetext.com/) package to **beautify, clean,
 minify and annotate EDI documents** — with first-class support for **UN/EDIFACT**
 and the other major delimiter-based EDI standards.
 
-Raw EDI arrives as one long, unreadable line. SublimeEDI turns it into something
+Raw EDI arrives as one long, unreadable line. EDIBlime turns it into something
 a human can actually work with: one segment per line, syntax highlighting, and
 optional inline hints that name every segment — without ever changing the data.
 
@@ -156,11 +156,11 @@ Clone into your Sublime Text `Packages` directory (the folder revealed by
 **Preferences → Browse Packages…**):
 
 ```sh
-git clone https://github.com/encefalopiatto/SublimeEDI.git "SublimeEDI"
+git clone https://github.com/encefalopiatto/SublimeEDI.git "EDIBlime"
 ```
 
-> The package folder **must** be named `SublimeEDI` so the bundled syntax
-> references (`Packages/SublimeEDI/…`) resolve.
+> Name the folder `EDIBlime`. (Resource paths are resolved from the installed
+> folder name, so another name still works — but menus and docs assume `EDIBlime`.)
 
 Requires **Sublime Text 4** (build 4050+) for the inline annotation API.
 

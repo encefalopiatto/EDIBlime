@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Static reference data for the SublimeEDI package.
+Static reference data for the EDIBlime package.
 
 This module contains, for every supported EDI dialect:
 

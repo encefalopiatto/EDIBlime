@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SublimeEDI -- beautify, minify, annotate, explain, validate and convert EDI
+EDIBlime -- beautify, minify, annotate, explain, validate and convert EDI
 files inside Sublime Text.
 
 This module is the (thin) Sublime Text integration layer. All parsing,
@@ -35,9 +35,9 @@ from . import edi_validate
 
 # Resolve the installed package name dynamically so bundled resource paths
 # (syntaxes) keep working if the package folder is renamed.
-_PACKAGE = (__package__ or "SublimeEDI").split(".")[0]
+_PACKAGE = (__package__ or "EDIBlime").split(".")[0]
 
-SETTINGS_FILE = "EDI.sublime-settings"
+SETTINGS_FILE = "EDIBlime.sublime-settings"
 HINT_REGION_KEY = "edi_hints"
 STATUS_KEY = "edi_status"
 # Per-view flag (stored in view settings) tracking whether hints are shown.

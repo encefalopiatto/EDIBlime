@@ -3,7 +3,7 @@
         "id": "tools",
         "children": [
             {
-                "caption": "EDI",
+                "caption": "EDIBlime",
                 "children": [
                     {
                         "caption": "Beautify (one segment per line)",
@@ -65,13 +65,13 @@
                 "caption": "Package Settings",
                 "children": [
                     {
-                        "caption": "EDI",
+                        "caption": "EDIBlime",
                         "children": [
                             {
                                 "caption": "Settings",
                                 "command": "edit_settings",
                                 "args": {
-                                    "base_file": "${packages}/SublimeEDI/EDI.sublime-settings",
+                                    "base_file": "${packages}/EDIBlime/EDIBlime.sublime-settings",
                                     "default": "// EDI settings — user overrides\n{\n\t$0\n}\n"
                                 }
                             },
@@ -79,7 +79,7 @@
                                 "caption": "Key Bindings",
                                 "command": "edit_settings",
                                 "args": {
-                                    "base_file": "${packages}/SublimeEDI/Default (${platform}).sublime-keymap",
+                                    "base_file": "${packages}/EDIBlime/Default (${platform}).sublime-keymap",
                                     "default": "// EDI key bindings — user overrides\n[\n\t$0\n]\n"
                                 }
                             }

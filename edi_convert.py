@@ -112,7 +112,7 @@ def to_jsonc(text, dialect=None):
     push = lines.append
 
     push("{")
-    push('  // %s message converted by SublimeEDI' % dialect.label)
+    push('  // %s message converted by EDIBlime' % dialect.label)
     push('  "dialect": %s,' % dumps(dialect.label))
     push('  "delimiters": {')
     push('    "segment": %s,' % dumps(dialect.segment_terminator))

@@ -1,4 +1,4 @@
-Thanks for installing SublimeEDI!
+Thanks for installing EDIBlime!
 
 Beautify, minify and annotate EDI documents — EDIFACT, X12, TRADACOMS, HL7 and
 the EDIFACT subsets (EANCOM, ODETTE, EDIG@S, IATA/PADIS).
