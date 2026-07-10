@@ -58,6 +58,13 @@
                         }
                     },
                     {
+                        "caption": "Normalize to JSON (named elements)",
+                        "command": "edi_convert",
+                        "args": {
+                            "format": "normalized"
+                        }
+                    },
+                    {
                         "caption": "-"
                     },
                     {

@@ -4,9 +4,10 @@ EDIBlime -- beautify, minify, annotate, explain, validate, repair and convert
 EDI files inside Sublime Text.
 
 This module is the (thin) Sublime Text integration layer. All parsing,
-formatting, conversion and validation logic lives in :mod:`edi_core`,
-:mod:`edi_convert` and :mod:`edi_validate`, which have no Sublime dependency
-and are unit tested separately.
+formatting, conversion, normalization and validation logic lives in
+:mod:`edi_core`, :mod:`edi_convert`, :mod:`edi_normalize` and
+:mod:`edi_validate`, which have no Sublime dependency and are unit tested
+separately.
 
 Commands provided (command palette / menus / key bindings):
 
@@ -18,7 +19,8 @@ Commands provided (command palette / menus / key bindings):
 * ``edi_validate``        -- check envelope integrity (counts / references)
 * ``edi_repair``          -- recompute counts and re-sync control references
 * ``edi_outline``         -- browse the message structure in a quick panel
-* ``edi_convert``         -- convert the buffer to JSON, JSONC or XML
+* ``edi_convert``         -- convert the buffer to JSON, JSONC or XML, or
+                             normalize it to JSON with named elements
 * ``edi_set_dialect``     -- override the auto-detected dialect for a view
 * ``edi_detect_syntax``   -- (re)apply the matching syntax to the view
 
@@ -41,6 +43,7 @@ import sublime_plugin
 from . import edi_convert
 from . import edi_core
 from . import edi_data
+from . import edi_normalize
 from . import edi_validate
 
 # Resolve the installed package name dynamically so bundled resource paths
@@ -446,12 +449,14 @@ def _render_issue_regions(view, issues):
 # ---------------------------------------------------------------------------
 
 class EdiConvertCommand(sublime_plugin.TextCommand):
-    """Convert the buffer to JSON, JSONC or XML into a new tab."""
+    """Convert the buffer to JSON, JSONC, XML or normalized JSON in a new tab."""
 
     CONVERTERS = {
         "json": (edi_convert.to_json, "JSON.sublime-syntax", ".json"),
         "jsonc": (edi_convert.to_jsonc, "JSON.sublime-syntax", ".jsonc"),
         "xml": (edi_convert.to_xml, "XML.sublime-syntax", ".xml"),
+        "normalized": (edi_normalize.to_json, "JSON.sublime-syntax",
+                       ".normalized.json"),
     }
 
     def run(self, edit, format="json"):

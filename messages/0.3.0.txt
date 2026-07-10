@@ -1,0 +1,30 @@
+EDIBlime 0.3.0
+==============
+
+New feature: Normalize to JSON
+------------------------------
+"EDI: Normalize to JSON" (command palette, Tools > EDIBlime, context menu)
+converts the buffer into the kind of JSON an integration platform works
+with — every segment, composite and element keyed by its official name
+from the standard, and the envelope turned into real nesting
+(interchange -> functional group -> message):
+
+    "beginning_of_message_BGM": {
+      "document_message_name_C002": {
+        "document_message_name_coded_1001": "220",
+        ...
+
+- EDIFACT keys follow the UNTDID directories (segment tags, C/S composite
+  codes, 4-digit element codes); the full D.96A segment directory is
+  bundled. Service segments (UNB, UNH, ...) follow ISO 9735.
+- Segment-group nesting (e.g. LIN groups inside LOC groups) follows the
+  official D.96A message definitions for ORDERS, ORDRSP, ORDCHG, DESADV,
+  RECADV, INVOIC, REMADV, PRICAT, SLSRPT, INVRPT, DELFOR, DELJIT, PARTIN,
+  QUOTES and REQOTE. Repeatable segments become stable "_list" arrays,
+  groups become "_groups" arrays.
+- X12, TRADACOMS and HL7 normalize with the same convention using
+  positional names ("purchase_order_number_03", "patient_name_5") and
+  their own envelope nesting (ISA/GS/ST, STX/MHD, MSH).
+- Graceful degradation everywhere: unknown message types, segments or
+  elements fall back to tag/position keys; stray segments are collected
+  under "unparsed_segments" — nothing is dropped and nothing fails.
