@@ -49,6 +49,13 @@
         }
     },
     {
+        "caption": "EDI: Normalize to JSON (named elements)",
+        "command": "edi_convert",
+        "args": {
+            "format": "normalized"
+        }
+    },
+    {
         "caption": "EDI: Set Dialect…",
         "command": "edi_set_dialect"
     },

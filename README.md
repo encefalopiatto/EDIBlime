@@ -63,6 +63,13 @@ valid, byte-for-byte EDI document.
   is preceded by a comment explaining what it does, and every element carries
   its positional name. Release characters and HL7 escapes are decoded; values
   stay strings so leading zeros and implied decimals survive.
+- **Normalize to JSON** — the integration-platform view of a message: every
+  segment, composite and element keyed by its *official name* from the
+  standard (`beginning_of_message_BGM`, `document_message_number_1004`), the
+  envelope turned into real nesting (interchange → functional group →
+  message) and EDIFACT segment groups nested per the official message
+  definitions (the D.96A directory is bundled). See
+  [Normalized output](#normalized-output).
 - **Automatic dialect detection** — the delimiters are read from the message
   itself (EDIFACT `UNA`, X12 `ISA`, HL7 `MSH`) with sensible fallbacks, so
   non-standard delimiter sets are handled correctly.
@@ -112,6 +119,7 @@ outline, convert).
 | `edi_convert` (json) | EDI: Convert to JSON | — |
 | `edi_convert` (jsonc) | EDI: Convert to JSONC (with descriptions) | — |
 | `edi_convert` (xml) | EDI: Convert to XML | — |
+| `edi_convert` (normalized) | EDI: Normalize to JSON (named elements) | — |
 | `edi_set_dialect` | EDI: Set Dialect… | — |
 | `edi_detect_syntax` | EDI: Detect Syntax | — |
 
@@ -149,6 +157,58 @@ comment reads `[137 = Document/message date]`.
 
 JSON is the same structure without comments; XML nests
 `<segment>` → `<element>` → `<component>` with `name` attributes.
+
+### Normalized output
+
+`EDI: Normalize to JSON` produces the semantic view instead of the
+structural one — the shape EDI integration platforms work with. Keys are the
+snake_cased **official names** followed by the code that names the item in
+the standard:
+
+- the segment tag (`beginning_of_message_BGM`),
+- the composite data element code (`document_message_name_C002`,
+  `syntax_identifier_S001` for ISO 9735 service composites),
+- the simple data element code (`document_message_number_1004`,
+  `interchange_control_reference_0020`).
+
+```json
+{
+  "payloads": [
+    {
+      "interchange_header_UNB": { "...": "..." },
+      "messages": [
+        {
+          "MESSAGE_TYPE": "ORDERS",
+          "message_header_UNH": { "...": "..." },
+          "beginning_of_message_BGM": {
+            "document_message_name_C002": { "document_message_name_coded_1001": "220" },
+            "document_message_number_1004": "PO12345"
+          },
+          "date_time_period_DTM_list": [ { "...": "..." } ],
+          "line_item_LIN_groups": [ { "...": "..." } ],
+          "message_trailer_UNT": { "...": "..." }
+        }
+      ],
+      "interchange_trailer_UNZ": { "...": "..." }
+    }
+  ],
+  "context": {}
+}
+```
+
+The envelope becomes real nesting (one payload per interchange, functional
+groups when `UNG`/`GS` are present), repeatable segments become stable
+`..._list` arrays, and EDIFACT segment groups become `..._groups` arrays
+named after their trigger segment, nested per the official message
+definitions. The EDIFACT names come from the bundled UNTDID **D.96A**
+directory (the basis of EANCOM 1997) plus ISO 9735 for service segments;
+message structures are bundled for ORDERS, ORDRSP, ORDCHG, DESADV, RECADV,
+INVOIC, REMADV, PRICAT, SLSRPT, INVRPT, DELFOR, DELJIT, PARTIN, QUOTES and
+REQOTE. X12, TRADACOMS and HL7 use the same convention with positional
+suffixes (`purchase_order_number_03`, `patient_name_5`) and their own
+envelopes (ISA/GS/ST, STX/MHD, MSH). Anything unknown degrades gracefully to
+tag/position keys, and stray segments are collected under
+`unparsed_segments` — nothing is dropped.
 
 ## Settings
 
@@ -208,6 +268,11 @@ The package is split into a Sublime-independent engine and a thin editor layer:
   parsing, beautify, minify and describe. No Sublime dependency, so it is
   unit tested directly.
 - **`edi_convert.py`** — JSON / JSONC / XML conversion.
+- **`edi_normalize.py`** — normalization to named JSON (envelope nesting,
+  segment groups, official element names).
+- **`edi_norm_data.py`** — the normalization reference data: the UNTDID
+  D.96A segment directory and message structures, ISO 9735 service segments,
+  and the X12 / TRADACOMS / HL7 name tables.
 - **`edi_validate.py`** — envelope integrity validation.
 - **`edi.py`** — Sublime commands, menus, annotations, hover popups, status
   bar and auto-detection.

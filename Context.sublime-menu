@@ -47,5 +47,12 @@
         "args": {
             "format": "xml"
         }
+    },
+    {
+        "caption": "EDI: Normalize to JSON",
+        "command": "edi_convert",
+        "args": {
+            "format": "normalized"
+        }
     }
 ]
