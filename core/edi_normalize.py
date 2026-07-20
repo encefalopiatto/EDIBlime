@@ -62,12 +62,8 @@ Structure rules:
 
 import json
 
-try:
-    from . import edi_core
-    from . import edi_norm_data
-except (ImportError, ValueError):
-    import edi_core
-    import edi_norm_data
+from . import edi_core
+from . import edi_norm_data
 
 
 # ---------------------------------------------------------------------------

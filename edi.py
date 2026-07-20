@@ -40,11 +40,11 @@ import os
 import sublime
 import sublime_plugin
 
-from . import edi_convert
-from . import edi_core
-from . import edi_data
-from . import edi_normalize
-from . import edi_validate
+from .core import edi_convert
+from .core import edi_core
+from .core import edi_data
+from .core import edi_normalize
+from .core import edi_validate
 
 # Resolve the installed package name dynamically so bundled resource paths
 # (syntaxes) keep working if the package folder is renamed.

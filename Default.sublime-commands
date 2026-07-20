@@ -62,5 +62,13 @@
     {
         "caption": "EDI: Detect Syntax",
         "command": "edi_detect_syntax"
+    },
+    {
+        "caption": "Preferences: EDIBlime Settings",
+        "command": "edit_settings",
+        "args": {
+            "base_file": "${packages}/EDIBlime/EDIBlime.sublime-settings",
+            "default": "// EDI settings — user overrides\n{\n\t$0\n}\n"
+        }
     }
 ]

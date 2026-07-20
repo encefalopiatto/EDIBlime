@@ -26,6 +26,11 @@ in `.gitattributes`, so it never ships to users.
 - [x] Minimum Sublime Text build verified from actual API usage: **4095**
   (`sublime.KIND_ID_COLOR_*`, used at module import). Any stable ST4 release
   (4107+) qualifies.
+- [x] `edi.py` is the only root-level Python file (Sublime Text loads every
+  root-level `.py` as an independent plugin, and plugins must not import
+  each other); the shared engine lives in the `core/` subpackage.
+- [x] The command palette has a `Preferences: EDIBlime Settings` entry using
+  `edit_settings` (requested in the channel review).
 
 ## Remaining steps (in order)
 
@@ -43,8 +48,8 @@ Package Control resolves releases **exclusively from semver git tags**
 with "no releases found". On the release commit on `main`:
 
 ```sh
-git tag 0.2.0
-git push origin 0.2.0
+git tag 0.4.0
+git push origin 0.4.0
 ```
 
 Use a bare semver tag (no `v` prefix) so it matches the `messages.json` keys.

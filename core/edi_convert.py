@@ -22,12 +22,8 @@ Value handling:
 import json
 import re
 
-try:
-    from . import edi_core
-    from . import edi_data
-except (ImportError, ValueError):
-    import edi_core
-    import edi_data
+from . import edi_core
+from . import edi_data
 
 # Control characters sanitized out of ``//`` comments (a newline in raw data
 # would otherwise break the "strip comments -> valid JSON" contract) and out

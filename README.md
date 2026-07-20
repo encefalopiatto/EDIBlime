@@ -260,20 +260,23 @@ Requires **Sublime Text 4**, build 4095 or later — any stable ST4 release
 
 ## How it works
 
-The package is split into a Sublime-independent engine and a thin editor layer:
+The package is split into a Sublime-independent engine and a thin editor
+layer. `edi.py` is the only plugin at the package root (Sublime Text loads
+every root-level `.py` file as a plugin); the engine lives in the `core/`
+subpackage:
 
-- **`edi_data.py`** — delimiter dialects, segment names, detailed segment
+- **`core/edi_data.py`** — delimiter dialects, segment names, detailed segment
   descriptions and positional element names.
-- **`edi_core.py`** — detection, release-aware segment splitting, element
+- **`core/edi_core.py`** — detection, release-aware segment splitting, element
   parsing, beautify, minify and describe. No Sublime dependency, so it is
   unit tested directly.
-- **`edi_convert.py`** — JSON / JSONC / XML conversion.
-- **`edi_normalize.py`** — normalization to named JSON (envelope nesting,
+- **`core/edi_convert.py`** — JSON / JSONC / XML conversion.
+- **`core/edi_normalize.py`** — normalization to named JSON (envelope nesting,
   segment groups, official element names).
-- **`edi_norm_data.py`** — the normalization reference data: the UNTDID
+- **`core/edi_norm_data.py`** — the normalization reference data: the UNTDID
   D.96A segment directory and message structures, ISO 9735 service segments,
   and the X12 / TRADACOMS / HL7 name tables.
-- **`edi_validate.py`** — envelope integrity validation.
+- **`core/edi_validate.py`** — envelope integrity validation.
 - **`edi.py`** — Sublime commands, menus, annotations, hover popups, status
   bar and auto-detection.
 
@@ -297,7 +300,7 @@ The tests cover dialect detection, delimiter extraction, release-character
 handling, beautify ↔ minify round-tripping, and segment description lookups
 for every supported family.
 
-Segment reference tables are plain dictionaries in `edi_data.py` — adding names
+Segment reference tables are plain dictionaries in `core/edi_data.py` — adding names
 or a new dialect subset needs no code changes to the engine.
 
 ## License

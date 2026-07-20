@@ -24,12 +24,7 @@ The public surface is small and stable:
 
 import re
 
-try:
-    # Normal case: imported as part of the Sublime Text package.
-    from . import edi_data
-except (ImportError, ValueError):
-    # Standalone case: imported directly (e.g. the unit tests).
-    import edi_data
+from . import edi_data
 
 
 class Dialect(object):
