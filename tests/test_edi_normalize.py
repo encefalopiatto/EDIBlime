@@ -8,8 +8,8 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import edi_core  # noqa: E402
-import edi_normalize  # noqa: E402
+from core import edi_core  # noqa: E402
+from core import edi_normalize  # noqa: E402
 
 
 # A real-world style EANCOM SLSRPT (sales data report): one interchange, one

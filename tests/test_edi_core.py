@@ -12,7 +12,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import edi_core  # noqa: E402
+from core import edi_core  # noqa: E402
 
 
 # Sample messages -----------------------------------------------------------
@@ -219,7 +219,7 @@ class SubsetTests(unittest.TestCase):
         self.assertEqual(d.segment_terminator, "'")
 
     def test_subset_segment_names_fall_back_to_edifact(self):
-        import edi_data
+        from core import edi_data
         self.assertEqual(edi_data.segment_name("odette", "BGM"),
                          "Beginning of Message")
 

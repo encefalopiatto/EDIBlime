@@ -1,0 +1,13 @@
+EDIBlime 0.4.0
+==============
+
+Package Control review fixes
+----------------------------
+- Restructured for Sublime Text's plugin loader: `edi.py` is now the only
+  plugin at the package root, and the whole engine (parsing, conversion,
+  normalization, validation and their data tables) moved into the `core/`
+  subpackage. Sublime Text treats every root-level .py file as a plugin
+  and reloads them independently, so shared modules must not live there.
+  No commands, key bindings or settings changed.
+- Added "Preferences: EDIBlime Settings" to the command palette, opening
+  the usual split view of default and user settings.

@@ -22,12 +22,8 @@ Issues are returned as dicts: ``{"offset", "severity", "message"}`` where
 character offset into the original text (for editor navigation).
 """
 
-try:
-    from . import edi_core
-    from . import edi_data
-except (ImportError, ValueError):
-    import edi_core
-    import edi_data
+from . import edi_core
+from . import edi_data
 
 
 def validate(text, dialect=None):

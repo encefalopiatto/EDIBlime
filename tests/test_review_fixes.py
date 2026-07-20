@@ -11,10 +11,10 @@ import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import edi_convert  # noqa: E402
-import edi_core  # noqa: E402
-import edi_data  # noqa: E402
-import edi_validate  # noqa: E402
+from core import edi_convert  # noqa: E402
+from core import edi_core  # noqa: E402
+from core import edi_data  # noqa: E402
+from core import edi_validate  # noqa: E402
 
 
 class DetectionStrictnessTests(unittest.TestCase):
